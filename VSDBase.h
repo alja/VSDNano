@@ -145,8 +145,7 @@ public:
     nlohmann::json *m_config{nullptr};
     std::string m_title{"VSDPRovider"};
 
-    virtual Long64_t GetNumEvents() { return 0; }
-
+    virtual Long64_t GetNumEvents() = 0;
     void addCollection(VSDCollection *h)
     {
         m_collections.push_back(h);
