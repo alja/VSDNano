@@ -80,10 +80,11 @@ public:
   bool supports_collection(const std::string &cn) const;
   bool has_collection(const std::string &cn) const;
 
-protected:
+public: // AMT need to access this in VsdProvider
   std::vector<VsdBranchBase*> m_supported_vector;
   std::map<std::string, VsdBranchBase*> m_supported_map;
 
+protected:
   std::vector<VsdBranchBase*> m_active_vector;
   std::map<std::string, VsdBranchBase*> m_active_map;
 
@@ -94,7 +95,9 @@ protected:
   REGISTER_BRANCH(VsdVertex, primvs);
   REGISTER_BRANCH(VsdCandidate, cands);
   REGISTER_BRANCH(VsdJet, jets);
-  REGISTER_BRANCH(VsdMET, cmets);
+  REGISTER_BRANCH(VsdMET, caloMETs);
+  REGISTER_BRANCH(VsdMET, chsMETs);
+  REGISTER_BRANCH(VsdMuon, muons);
   REGISTER_BRANCH(VsdEventInfo, infos);
 };
 
