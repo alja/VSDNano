@@ -603,24 +603,30 @@ void createScenesAndViews()
       rPhiView->AddScene(rPhiEventScene);
 
       auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry");
+       mngRPhi->SetCurrentDepth(-4);
       mngRPhi->ImportElements(b1,pgeoScene );
       rPhiView->AddScene(pgeoScene);
+       mngRPhi->SetCurrentDepth(-1);
       mngRPhi->ImportElements(calo3d, rPhiEventScene);
+       mngRPhi->SetCurrentDepth(0);
    }
    // Projected RhoZ
    if (1)
    {
-      auto rhoZEventScene = eveMng->SpawnNewScene("RhoZ Scene", "RhoZProjected");
-      mngRhoZ = new REveProjectionManager(REveProjection::kPT_RhoZ);
-      mngRhoZ->SetImportEmpty(true);
-      auto rhoZView = eveMng->SpawnNewViewer("RhoZ View");
-      rhoZView->SetCameraType(REveViewer::kCameraOrthoXOY);
-      rhoZView->AddScene(rhoZEventScene);
+       auto rhoZEventScene = eveMng->SpawnNewScene("RhoZ Scene", "RhoZProjected");
+       mngRhoZ = new REveProjectionManager(REveProjection::kPT_RhoZ);
+       mngRhoZ->SetImportEmpty(true);
+       auto rhoZView = eveMng->SpawnNewViewer("RhoZ View");
+       rhoZView->SetCameraType(REveViewer::kCameraOrthoXOY);
+       rhoZView->AddScene(rhoZEventScene);
 
-      auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry");
-      mngRhoZ->ImportElements(b1,pgeoScene );
-      rhoZView->AddScene(pgeoScene);
-      mngRhoZ->ImportElements(calo3d, rhoZEventScene);
+       auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry");
+       mngRhoZ->SetCurrentDepth(-4);
+       mngRhoZ->ImportElements(b1, pgeoScene);
+       rhoZView->AddScene(pgeoScene);
+       mngRhoZ->SetCurrentDepth(-1);
+       mngRhoZ->ImportElements(calo3d, rhoZEventScene);
+       mngRhoZ->SetCurrentDepth(0);
    }
       // collections
    eveMng->SpawnNewScene("Collections", "Collections");
