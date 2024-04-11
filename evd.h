@@ -597,6 +597,10 @@ void createScenesAndViews()
    {
       auto rPhiEventScene = eveMng->SpawnNewScene("RPhi Scene", "RPhiProjected");
       mngRPhi = new REveProjectionManager(REveProjection::kPT_RPhi);
+
+      mngRPhi->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
+      mngRPhi->GetProjection()->AddPreScaleEntry(0, 300, 0.6);
+
       mngRPhi->SetImportEmpty(true);
       auto rPhiView = eveMng->SpawnNewViewer("RPhi View");
       rPhiView->SetCameraType(REveViewer::kCameraOrthoXOY);
@@ -615,6 +619,12 @@ void createScenesAndViews()
    {
        auto rhoZEventScene = eveMng->SpawnNewScene("RhoZ Scene", "RhoZProjected");
        mngRhoZ = new REveProjectionManager(REveProjection::kPT_RhoZ);
+
+       mngRhoZ->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
+       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 310, 1.0);
+       mngRhoZ->GetProjection()->AddPreScaleEntry(0, 370, 0.6);
+       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 580, 0.4);
+
        mngRhoZ->SetImportEmpty(true);
        auto rhoZView = eveMng->SpawnNewViewer("RhoZ View");
        rhoZView->SetCameraType(REveViewer::kCameraOrthoXOY);
