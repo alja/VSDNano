@@ -411,6 +411,11 @@ class JetProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdJet>
       float phiMax;
    };
 
+   void SetCollection(REveDataCollection * collection) override
+   {
+      REveDataProxyBuilderBase::SetCollection(collection);
+      collection->SetLayer(-30);
+   }
    bool HaveSingleProduct() const override { return false; }
 
    void makeBarrelCell(Cell &cellData, float &offset, float towerH, float *pnts)
