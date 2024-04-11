@@ -590,7 +590,7 @@ void createScenesAndViews()
    auto b1 = new REveGeoShape("Barrel 1");
    b1->SetShape(new TGeoTube(r -2 , r+2, z));
    b1->SetMainColor(kCyan);
-   eveMng->GetGlobalScene()->AddElement(b1);
+   // eveMng->GetGlobalScene()->AddElement(b1);
 
    // Projected RPhi
    if (1)
@@ -649,7 +649,7 @@ void createScenesAndViews()
       tableScene->AddElement(viewContext->GetTableViewInfo());
    }
 
-    ((REveViewer*)(eveMng->GetViewers()->FirstChild()))->SetMandatory(false);
+    //((REveViewer*)(eveMng->GetViewers()->FirstChild()))->SetMandatory(false);
 }
 ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
