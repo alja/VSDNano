@@ -8,18 +8,18 @@
 
 class FWDataCollection : public ROOT::Experimental::REveDataCollection
 {
-    private:
-    ROOT::Experimental::REveDataProxyBuilderBase * m_builder {nullptr};
+private:
+    ROOT::Experimental::REveDataProxyBuilderBase *m_builder{nullptr};
 
-    public:
-    FWDataCollection(const std::string &n = "FWDataCollection", const std::string &varconfig = "") : 
-      ROOT::Experimental::REveDataCollection(n, "")
+public:
+    FWDataCollection(const std::string &n = "FWDataCollection", const std::string &varconfig = "") : ROOT::Experimental::REveDataCollection(n, "")
     {
         if (varconfig.empty())
         {
             m_config = nlohmann::json::array();
         }
-        else {
+        else
+        {
             m_config = nlohmann::json::parse(varconfig);
         }
     }
@@ -28,28 +28,27 @@ class FWDataCollection : public ROOT::Experimental::REveDataCollection
     // config handling
     nlohmann::json m_config;
 
-    bool hasConfigWithName(const std::string& n)
+    bool hasConfigWithName(const std::string &n)
     {
         for (auto &elem : m_config)
-{
-std::string cfgn = elem["name"];
+        {
+            std::string cfgn = elem["name"];
             if (cfgn == n)
                 return true;
-} 
-       return false;
+        }
+        return false;
     }
 
     void assertParamter(nlohmann::json j)
     {
         if (hasConfigWithName(j["name"]))
-        return;
+            return;
         m_config.push_back(j);
     }
 
-
-    void setGLBuilder(ROOT::Experimental::REveDataProxyBuilderBase * ib)
+    void setGLBuilder(ROOT::Experimental::REveDataProxyBuilderBase *ib)
     {
-       m_builder = ib;
+        m_builder = ib;
     }
 
     int WriteCoreJson(nlohmann::json &j, int rnr_offset) override
@@ -93,7 +92,8 @@ std::string cfgn = elem["name"];
             }
         }
         StampObjProps();
-        if (m_builder) m_builder->Build();
+        if (m_builder)
+            m_builder->Build();
     }
 
     long getLongParameter(const std::string &name)
@@ -118,14 +118,13 @@ std::string cfgn = elem["name"];
                         return;
                     }
                  return x;*/
-                 return elem["val"];
+                    return elem["val"];
                 }
             }
         }
         printf("can't locate long paramter\n");
         return 0;
     }
-
 
     bool getBoolParameter(const std::string &name)
     {
@@ -144,14 +143,12 @@ std::string cfgn = elem["name"];
                     int x = strcmp("val", "true");
                     return x;
                 }*/
-                return  elem["val"];
+                return elem["val"];
             }
         }
         printf("can't locate bool paramter\n");
         return false;
     }
-
 };
-
 
 #endif
