@@ -35,7 +35,7 @@ hcalBr.SetTitle(json.dumps(hcalCfg))
 
 
 gjv = ROOT.std.vector('VsdJet')()
-Vtree.Branch("GreenJets", gjv)
+Vtree.Branch("YellowJets", gjv)
 
 tmv = ROOT.std.vector('VsdMET')()
 Vtree.Branch("TestMETs", tmv)
@@ -57,8 +57,8 @@ Vtree.Branch("EventInfo", eiv)
 vertv = ROOT.std.vector('VsdVertex')()
 vertBr = Vtree.Branch("ErrVertex", vertv)
 vtxCfg = {
-   "color" : ROOT.kGreen +4,
-   "var" : [ {"name": "ScaleEllipse", "type" : "Long", "val" : 100 }, {"name": "MarkerSize", "type" : "Long", "val" : 10 }]
+   "color" : ROOT.kGreen -3,
+   "var" : [ {"name": "ScaleEllipse", "type" : "Long", "val" : 100 }, {"name": "MarkerSize", "type" : "Long", "val" : 4 }]
 }
 vertBr.SetTitle(json.dumps(vtxCfg))
 
