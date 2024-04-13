@@ -145,7 +145,14 @@ public:
       long markerSize = item->getLongParameter("MarkerSize");
       bool drawEllipse = item->getBoolParameter("DrawEllipse");
 
-      //reco::Vertex::Error e = iData.error();
+      // vertex position
+      //
+      auto ps = new REvePointSet("vertex pnt");
+      ps->SetMainColor(kGreen + 10);
+      ps->SetNextPoint(iData.x(), iData.y(), iData.z());
+      ps->SetMarkerStyle(4);
+      ps->SetMarkerSize(markerSize);
+      SetupAddElement(ps, iItemHolder );
 
       if (drawEllipse)
       {
@@ -161,40 +168,33 @@ public:
          TMatrixDEigen mtx(symMtx);
 
          TVectorD eigValsVec(mtx.GetEigenValues());
-         if (eigValsVec.Min() < 0) {
-            std::cout << "Negative Eig value !\n";
-            return;
-         }
-         eigValsVec = eigValsVec.Sqrt();
-
-         TMatrixD vecEig = mtx.GetEigenVectors();
-         // vecEig.Print();
-
-
-         long scale = item->getLongParameter("ScaleEllipse");
-         REveVector v[3];
-         for (int i = 0; i < 3; ++i)
+         if (eigValsVec.Min() < 0)
          {
-            v[i].Set(vecEig(0, i), vecEig(1, i), vecEig(2, i));
-            v[i] *= eigValsVec(i) * scale;
-            // v[i].Dump();
+            printf("Negative eigenvalue for collection %s idx %d, skipping draing of error \n", item->GetCName(), iIndex);
          }
-         REveEllipsoid *ell = new REveEllipsoid("VertexError");
-         ell->RefMainTrans().SetPos(iData.x(), iData.y(), iData.z());
-         ell->SetLineWidth(2);
-         ell->SetBaseVectors(v[0], v[1], v[2]);
-         ell->Outline();
-         SetupAddElement(ell, iItemHolder);
-      }
+         else
+         {
+            eigValsVec = eigValsVec.Sqrt();
 
-      // vertex position
-      //
-      auto ps = new REvePointSet("vertex pnt");
-      ps->SetMainColor(kGreen + 10);
-      ps->SetNextPoint(iData.x(), iData.y(), iData.z());
-      ps->SetMarkerStyle(4);
-      ps->SetMarkerSize(markerSize);
-      SetupAddElement(ps, iItemHolder );
+            TMatrixD vecEig = mtx.GetEigenVectors();
+            // vecEig.Print();
+
+            long scale = item->getLongParameter("ScaleEllipse");
+            REveVector v[3];
+            for (int i = 0; i < 3; ++i)
+            {
+               v[i].Set(vecEig(0, i), vecEig(1, i), vecEig(2, i));
+               v[i] *= eigValsVec(i) * scale;
+               // v[i].Dump();
+            }
+            REveEllipsoid *ell = new REveEllipsoid("VertexError");
+            ell->RefMainTrans().SetPos(iData.x(), iData.y(), iData.z());
+            ell->SetLineWidth(2);
+            ell->SetBaseVectors(v[0], v[1], v[2]);
+            ell->Outline();
+            SetupAddElement(ell, iItemHolder);
+         }
+      }
 
 /*
       // tracks
