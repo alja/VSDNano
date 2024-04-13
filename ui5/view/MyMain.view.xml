@@ -6,7 +6,7 @@
           xmlns:commons="sap.ui.commons">
    <Page title="EVE-7" showNavButton="false" showFooter="false" enableScrolling="false"
          showHeader="true"
-         showSubHeader="true" id="CanvasMainPage">
+         showSubHeader="true" class="sapUiSizeCompact" id="CanvasMainPage">
      <customHeader>
        <Bar id="otb1" >
          <contentLeft>
