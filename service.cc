@@ -636,6 +636,12 @@ void revetor()
                printf( "dataPath = %s \n", dataPath.c_str());
                evd(dataPath.c_str());
 
+               auto gui = REX::gEve->GetWorld()->LastChild();
+               std::string lp = logdirurl + log_fname;
+               auto le = new REX::REveElement(lp, lp);
+               gui->AddElement(le);
+
+
                // Connection key
                TRandom3 rnd(0);
                std::string con_key = RandomString(rnd, 16);

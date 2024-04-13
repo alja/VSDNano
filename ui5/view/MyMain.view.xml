@@ -65,6 +65,10 @@
             <Input id="eventInput" width="7em" class="sapUiTinyMargin" enabled="false"/>
                 <FormattedText id="centerTitle" htmlText="Universal Format"/>
          </contentMiddle>
+         <contentRight>
+          <Button id="logButton"
+                  text="Log URL" press="showFWLog"/>
+         </contentRight>
         </Bar>
      </customHeader>
      <subHeader>

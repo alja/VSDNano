@@ -45,6 +45,10 @@ let pthis = this;
          }
       },
 
+      showFWLog: function () {
+            let idx = this.fw2gui.childs.length -1;
+            sap.m.URLHelper.redirect(this.fw2gui.childs[idx].fTitle, true);
+      },
       onWebsocketMsg : function(handle, msg, offset)
       {
          this.mgr.onWebsocketMsg(handle, msg, offset);
