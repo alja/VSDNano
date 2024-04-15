@@ -1,10 +1,7 @@
 ROOT_CFLAGS := `root-config --cflags`
 ROOT_LDFLAGS := -L`root-config --libdir`
 
-all: myvsd nanovsd
-
-myvsd: mt_write mt_read MyVsdTree.class vsd-nano.root
-	@echo Now you can run "make evd"
+all: evd
 
 nanovsd: libVsdNanoDict.so MyVsdNanoTree.class
 
@@ -13,7 +10,7 @@ clean:
 	rm -f mt_read mt_write libVsdNanoDict.so *.class
 	rm -f service
 
-### VsdTree and dicts
+### Vsd Tree and dicts
 
 VsdDict.cc VsdDict_rdict.pcm &: VsdBase.h Vsd_Linkdef.h
 	rootcling -I. -f VsdDict.cc VsdBase.h Vsd_Linkdef.h
@@ -21,47 +18,19 @@ VsdDict.cc VsdDict_rdict.pcm &: VsdBase.h Vsd_Linkdef.h
 libVsdDict.so: VsdDict.cc
 	c++ -shared -fPIC -o libVsdDict.so ${ROOT_CFLAGS} VsdDict.cc
 
-mt_read: mt_test.cc VsdTree.h VsdTree.cc VsdDict.cc
-	c++ -DSTANDALONE_READ_TEST ${ROOT_CFLAGS} -g -O0 -std=c++1z `root-config --libs` -o $@ mt_test.cc VsdTree.cc VsdDict.cc
-
-mt_write: mt_test.cc VsdTree.h VsdTree.cc VsdDict.cc MyVsdTree.class
-	c++ -DSTANDALONE_WRITE_TEST ${ROOT_CFLAGS} -g -O0 -std=c++1z `root-config --libs` -o $@ mt_test.cc VsdTree.cc VsdDict.cc
-
-mt_user: mt_test.cc VsdTree.h VsdTree.cc VsdDict.cc UserVsd.root
-	c++ -DUSER_VSD_READ_TEST ${ROOT_CFLAGS} -g -O0 -std=c++1z `root-config --libs` -o $@ mt_test.cc VsdTree.cc VsdDict.cc
-
-mt_colproxy: mt_test.cc VsdTree.h VsdTree.cc VsdDict.cc UserVsd.root
-	c++ -DUSER_COLPROXY_READ_TEST ${ROOT_CFLAGS} -g -O0 -std=c++1z `root-config --libs` -o $@ mt_test.cc VsdTree.cc VsdDict.cc
-
-MyVsdTree.class: MyVsdTree.h
-	cpp -DFOR_VSD_CODE MyVsdTree.h | sed '/^#/d' > MyVsdTree.class
-
-vsd.root: mt_write
-	./mt_write
-
-mt_evd: vsd.root
-	root.exe  -e 'gSystem->Load("libVsdDict.so")' testevd.C'("vsd.root")'
+### Sample
 
 UserVsd.root: UserVsd.py
 	python UserVsd.py
 
-### CMS Nano
-
-NANO_ROOT := nano-CMSSW_11_0_0-RelValZTT-mcRun.root
-
-sample: ${NANO_ROOT}
-${NANO_ROOT}:
-	curl -O https://amraktad.web.cern.ch/amraktad/${NANO_ROOT}
+### CMS
 
 ## run event display
-evd: UserVsd.root libVsdDict.so
+evd: UserVsd.root libVsdDict.so UserVsd.root
 	root.exe  -e 'gSystem->Load("libVsdDict.so")' 'evd.h("UserVsd.root")'
 
-service: service.cc # libVsdDict.so
+service: service.cc libVsdDict.so
 	c++ ${ROOT_CFLAGS} `root-config --libs`  -lROOTEve -lROOTWebDisplay -lGeom -o $@ service.cc lego_bins.h # VsdTree.cc
 	# c++ ${ROOT_CFLAGS} `root-config --libs`  -lROOTEve -lROOTWebDisplay -lGeom -L. -lVsdDict -o $@ service.cc lego_bins.h VsdTree.cc
-
-# single: single.cc
-#	c++ ${ROOT_CFLAGS} `root-config --libs` -L. -lVsdDict -Wl,-rpath=. -lROOTEve -lROOTWebDisplay -lGeom -o $@ single.cc
 
 
