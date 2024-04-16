@@ -44,7 +44,6 @@ ROOT::Experimental::REveManager* eveMng;
 ROOT::Experimental::REveProjectionManager* mngRhoZ;
 ROOT::Experimental::REveProjectionManager* mngRPhi;
 ROOT::Experimental::REveViewContext* viewContext;
-ROOT::Experimental::REveTrackPropagator* muonPropagator_g;
 ROOT::Experimental::REveCaloDataHist* caloData;
 //==============================================================================
 //== Selection =================================================================
