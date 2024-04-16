@@ -1,16 +1,23 @@
-# VsdNano
-
-Setup ROOT environment and use Makefile to create a binary for writing (creating) and reading.
-
-### Create a VSD Tree
-
+# Setting up a developers environemnt
 ```
- make mt_write
-./mt_write
+git clone git@github.com:root-project/root.git
+mkfir root-build
+cd root-build
+cmake -Dhttp="ON" -Droot7="ON" ../root
 ```
 
-### Read VSD Tree
+
+### Build libraries 
+Setup root environment and use [Makefile](/Makefile) to build libraries
 ```
-make mt_read
-./mt_read
+make libVsdDict.co libFWDict.co
+```
+
+### Generate a sample
+```
+python UserVsd.py
+```
+### Run event display with the data sample
+```
+root.exe 'evd.h("UserVsd.root")'
 ```
