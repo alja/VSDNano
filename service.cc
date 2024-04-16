@@ -367,9 +367,10 @@ void revetor()
    TApplication app("REveService", 0, 0);
 
    gSystem->Load("libVsdDict.so");
-   auto *ff = TFile::Open("/home/viz/universal-format/samples//UserVsd-0.root");
-   ff->Close();
-   delete ff;
+   gSystem->Load("libFWDict.so");
+   //auto *ff = TFile::Open("/home/viz/universal-format/samples//UserVsd-0.root");
+   //ff->Close();
+   //delete ff;
 
    TServerSocket *ss = new TServerSocket(SERVICE_PORT, kTRUE);
    if (!ss->IsValid())
@@ -631,7 +632,7 @@ void revetor()
                dup2(fileno(stderr), 2);
                setlinebuf(stdout);
 
-               gROOT->LoadMacro("evd.h");
+               // gROOT->LoadMacro("evd.h");
                std::string dataPath = req["file"].get<std::string>();
                printf( "dataPath = %s \n", dataPath.c_str());
                evd(dataPath.c_str());

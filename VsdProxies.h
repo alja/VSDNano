@@ -4,6 +4,7 @@
 
 #include "TROOT.h"
 #include "TH2.h"
+#include "TFile.h"
 #include "ROOT/REveDataCollection.hxx"
 #include "ROOT/REveDataSimpleProxyBuilderTemplate.hxx"
 #include "ROOT/REveManager.hxx"
