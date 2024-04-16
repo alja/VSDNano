@@ -35,7 +35,7 @@ UserVsd.root: UserVsd.py
 evd: UserVsd.root libVsdDict.so libFWDict.so
 	root.exe 'evd.h("UserVsd.root")'
 
-service: service.cc libVsdDict.so
+service: service.cc evd.h libVsdDict.so libFWDict.so
 	c++ ${ROOT_CFLAGS} `root-config --libs`  -lROOTEve -lROOTWebDisplay -lGeom -o $@ service.cc lego_bins.h # VsdTree.cc
 	# c++ ${ROOT_CFLAGS} `root-config --libs`  -lROOTEve -lROOTWebDisplay -lGeom -L. -lVsdDict -o $@ service.cc lego_bins.h VsdTree.cc
 
