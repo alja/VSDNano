@@ -36,6 +36,10 @@ See [VSDBase.h](/VsdBase.h) for all implementation details.
 Detector geometry is mostly needed as a background for high level objects, but it also contains some important information, such as the boundary of low material region (pixel and tracker volume), the detector boundary including the muon detectors and a simplified magnetic field model to visualize charged tracks properly.
 
 
+### Preview
+Use existing samples in the universal data format service https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
+
+
 ### Workflow
 
 #### Build libraries 
@@ -60,16 +64,19 @@ https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
 <br>
 
-## Developers information
+## VSD Developers information
+One needs to work with the tip of ROOT master branch to modify the VSD strucutres and change their graphic representation.
+Use -Droot7="ON" cmake flag to actived building of REve module.
 
-### Building the lastest version of ROOT with web gui enabled 
+### Building REve in ROOT 
 ```
 git clone git@github.com:root-project/root.git
 mkdir root-build
 cd root-build
 cmake -Dhttp="ON" -Droot7="ON" ../root
+make
 ```
-### Run event display locally without the service
+### Run event display locally
 ```
 root.exe 'evd.h("UserVsd.root")'
 ```
