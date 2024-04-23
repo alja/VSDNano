@@ -42,11 +42,13 @@ Detector geometry is mostly needed as a background for high level objects, but i
 The VSD libraries are not yet distributed in ROOT. Currently one needs to build them with the sources in this repository. 
 Setup a ROOT environment and use [Makefile](/Makefile) to build libraries
 ```
+git clone https://github.com/alja/VSDNano.git
 make libVsdDict.co libFWDict.co
 ```
 
 ## Generate a sample
-Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. See an example in [UserVsd.py](/UserVsd.py) 
+Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. 
+See a python script example in [UserVsd.py](/UserVsd.py) 
 ```
 python UserVsd.py
 ```
@@ -57,9 +59,9 @@ When file is publicly available through eos or xrootd, one can run the event dis
 https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
 
-## Developers's info
+# Developers information
 
-### Building ROOT with web gui enabled 
+### Building the lastest version of ROOT with web gui enabled 
 ```
 git clone git@github.com:root-project/root.git
 mkdir root-build
@@ -71,13 +73,3 @@ cmake -Dhttp="ON" -Droot7="ON" ../root
 root.exe 'evd.h("UserVsd.root")'
 ```
 
-## Universal data format web service
-### build service and run
-```
-make service
-service --port 5566
-```
-Use script to run @CERN 
-```
-/home/viz/universal-format/runUniversalServ.sh
-```
