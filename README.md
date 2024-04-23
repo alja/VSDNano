@@ -46,7 +46,7 @@ git clone https://github.com/alja/VSDNano.git
 make libVsdDict.co libFWDict.co
 ```
 
-## Write a data sample
+## Data sample
 Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. 
 See a python script example in [UserVsd.py](/UserVsd.py) 
 ```
