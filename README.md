@@ -58,7 +58,7 @@ python UserVsd.py
 ```
 
 ### Run event display through web service
-When file is publicly available through eos or xrootd, one can run the event display through the web service
+Run the event display through the web service with the data sample once it is publicly available on eos location (e.g. /eos/user/a/amraktad/Fireworks-Test/ksmm_background.root)
 
 https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
