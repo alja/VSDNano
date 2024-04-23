@@ -32,13 +32,13 @@ A minimal set of high level objects includes
 
 See [VSDBase.h](/VsdBase.h) for all implementation details.
 
-## Detector Geometry and Magnetic Field
+### Detector Geometry and Magnetic Field
 Detector geometry is mostly needed as a background for high level objects, but it also contains some important information, such as the boundary of low material region (pixel and tracker volume), the detector boundary including the muon detectors and a simplified magnetic field model to visualize charged tracks properly.
 
 
-## Workflow
+### Workflow
 
-### Build libraries 
+#### Build libraries 
 The VSD libraries are not yet distributed in ROOT. Currently one needs to build them with the sources in this repository. 
 Setup a ROOT environment and use [Makefile](/Makefile) to build libraries
 ```
@@ -46,20 +46,21 @@ git clone https://github.com/alja/VSDNano.git
 make libVsdDict.co libFWDict.co
 ```
 
-## Data sample
+### Data sample
 Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. 
 See a python script example in [UserVsd.py](/UserVsd.py) 
 ```
 python UserVsd.py
 ```
 
-## Run event display through web service
+### Run event display through web service
 When file is publicly available through eos or xrootd, one can run the event display through the web service
 
 https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
+<br>
 
-# Developers information
+## Developers information
 
 ### Building the lastest version of ROOT with web gui enabled 
 ```
