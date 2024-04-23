@@ -64,7 +64,7 @@ https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
 <br>
 
-## VSD Developers information
+## Developers information
 One needs to work with the tip of ROOT master branch to modify the VSD strucutres and change their graphic representation.
 Use -Droot7="ON" cmake flag to actived building of REve module.
 
