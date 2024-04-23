@@ -46,7 +46,7 @@ git clone https://github.com/alja/VSDNano.git
 make libVsdDict.co libFWDict.co
 ```
 
-## Generate a sample
+## Write a data sample
 Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. 
 See a python script example in [UserVsd.py](/UserVsd.py) 
 ```
@@ -68,7 +68,7 @@ mkdir root-build
 cd root-build
 cmake -Dhttp="ON" -Droot7="ON" ../root
 ```
-### Run event display locally
+### Run event display locally without the service
 ```
 root.exe 'evd.h("UserVsd.root")'
 ```
