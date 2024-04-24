@@ -65,7 +65,7 @@ make libVsdDict.co libFWDict.co
 ```
 
 ## Write TTree with branches with vector of VSD objects
-Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. 
+Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. See the snippet below:
 See a python script example in [UserVsd.py](/UserVsd.py) 
 ```
 Vtree = ROOT.TTree("VSD", "Custom plain VSD tree")
