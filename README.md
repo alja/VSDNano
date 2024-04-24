@@ -40,13 +40,14 @@ Detector geometry is mostly needed as a background for high level objects, but i
 
 Specific Cylindrical geometry input
 * tracker propagator boundaries
-    * float r = 139.5 cm;
-    * float z = 290 cm;
+    * r = 139.5 cm
+    * z = 290 cm
 * muon propagator boundaries
-   * float r = 850 cm;
-   * float z = 1100 cm;
-* magentic field values are provided with specific implementation of REveMagField, changing value at radius 350 cm
-REveMagFieldDuo(350, -3.5, 2.0));
+   * r = 850 cm
+   * z = 1100 cm
+* magentic field values are provided with implementation of ROOT::Experimental::REveMagField
+    * r < 350 cm, value -3.5 T
+    * r => 350 cm, value 2T
 
 
 # Preview
@@ -63,7 +64,7 @@ git clone https://github.com/alja/VSDNano.git
 make libVsdDict.co libFWDict.co
 ```
 
-## Write TTree with branches of vector of VSD structures
+## Write TTree with branches with vector of VSD objects
 Write a vector of the VSD structures in a plain root tree and relate it the ROOT's tree branch. 
 See a python script example in [UserVsd.py](/UserVsd.py) 
 ```
