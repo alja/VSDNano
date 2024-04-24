@@ -5,16 +5,16 @@
 Provide a simple web-based service to read data in a custom format and visualize it using a set of high level objects such as jets, charged and neutral tracks, muons etc using custom detector geometry and a C++ macro to convert custom event representation to a standard format. The custom format is called Visual Summary Data (VSD) format.
 
 
-# High Level Objects
+# High Level Physics Objects
 
-A minimal set of high level objects includes
+At the moment only Jets, Candiates, Muon, MET, and Vertex are implemented.See [VSDBase.h](/VsdBase.h) for all implementation details.
 
-* Jet - a cone with some indication of jet energy
+* Jet - a cone with indication of jet energy
     * Momentum vector
     * Jet size - optional
     * EM and HAD fractions - optional
 
-* VSDCandidate
+* Candidate
     * position, eta, phi, pt
     * charge
 
@@ -26,13 +26,21 @@ A minimal set of high level objects includes
     * 3D position
     * 3x3 matrix error, presented as ellipsoid
 
-* CaloTower (status: incomplete)
+* MET
+    * arrow in space
+    * length presents energy
+
+<span style="color:green">
+Missing ...
+
+* CaloTower 
     * eta, phi, pt presented as energy deposit
 
-* RecHits (status: missing)
+* Hits
     * collection in points
+    * what else ??? 
 
-See [VSDBase.h](/VsdBase.h) for all implementation details.
+</span>
 
 ## Detector Geometry and Magnetic Field
 Detector geometry is mostly needed as a background for high level objects, but it also contains some important information, such as the boundary of low material region (pixel and tracker volume), the detector boundary including the muon detectors and a simplified magnetic field model to visualize charged tracks properly.
