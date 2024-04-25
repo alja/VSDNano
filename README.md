@@ -1,5 +1,5 @@
 
-# UNIVERSAL DATA VISUALZIATION
+# UNIVERSAL DATA VISUALIZATION
 
 # Main Idea
 Provide a simple web-based service to read data in a custom format and visualize it using a set of high level objects such as jets, charged and neutral tracks, muons etc using custom detector geometry and a C++ macro to convert custom event representation to a standard format. The custom format is called Visual Summary Data (VSD) format.
