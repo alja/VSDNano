@@ -135,6 +135,7 @@ public:
       fwc->m_config.push_back({{"val", 5}, {"type", "Long"}, {"name", "MarkerSize"}});
       */
       fwc->assertParamter({{"val", true}, {"type", "Bool"}, {"name", "DrawEllipse"}});
+      fwc->assertParamter({{"val", true}, {"type", "Bool"}, {"name", "DrawEllipseSphere"}});
       fwc->assertParamter({{"val", 10}, {"type", "Long"}, {"name", "ScaleEllipse"}});
       fwc->assertParamter({{"val", 5}, {"type", "Long"}, {"name", "MarkerSize"}});
    }
@@ -164,7 +165,7 @@ public:
                // printf("Read error [%d,%d] %g\n", i, j, iData.m_error[i][j]);
                symMtx(i, j) = iData.m_error[i][j];
             }
-         symMtx.Print();
+         // symMtx.Print();
 
          TMatrixDEigen mtx(symMtx);
 
@@ -195,6 +196,33 @@ public:
             ell->SetBaseVectors(v[0], v[1], v[2]);
             ell->Outline();
             SetupAddElement(ell, iItemHolder);
+
+            // add TGeoSphere
+            if (item->getBoolParameter("DrawEllipseSphere"))
+            {
+               auto sph = new REveGeoShape("Sphere");
+               sph->SetShape(new TGeoSphere(0.98f, 1.0f));
+               sph->SetMainTransparency(80);
+               sph->SetMainColor(iItemHolder->GetMainColor());
+               sph->SetNSegments(80);
+
+               float m0 = v[0].Mag();
+               v[0].Normalize();
+               float m1 = v[1].Mag();
+               v[1].Normalize();
+               float m2 = v[2].Mag();
+               v[2].Normalize();
+
+               sph->InitMainTrans();
+               sph->RefMainTrans().SetBaseVec(1, v[0].fX, v[0].fY, v[0].fZ);
+               sph->RefMainTrans().SetBaseVec(2, v[1].fX, v[1].fY, v[1].fZ);
+               sph->RefMainTrans().SetBaseVec(3, v[2].fX, v[2].fY, v[2].fZ);
+               sph->RefMainTrans().SetScale(m0, m1, m2);
+               sph->RefMainTrans().SetPos(iData.x(), iData.y(), iData.z());
+               // last parameter is false to keep the transparency
+               SetupAddElement(sph, iItemHolder, false);
+            }
+
          }
       }
 
