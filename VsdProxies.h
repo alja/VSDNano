@@ -33,6 +33,7 @@
 #include "ROOT/REveEllipsoid.hxx"
 #include "TGeoBBox.h"
 #include "TGeoTube.h"
+#include "TGeoSphere.h"
 #include "TMatrixDEigen.h"
 #include "TMatrixDSym.h"
 
