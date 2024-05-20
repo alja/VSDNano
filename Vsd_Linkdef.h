@@ -23,4 +23,7 @@
 #pragma link C++ class VsdEventInfo+;
 #pragma link C++ class std::vector<VsdEventInfo>+;
 
+#pragma link C++ class VsdCaloTower+;
+#pragma link C++ class std::vector<VsdCaloTower>+;
+
 // #pragma link C++ class FWCollection+;

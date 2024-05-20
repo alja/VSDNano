@@ -10,29 +10,18 @@ pcv = ROOT.std.vector('VsdCandidate')()
 candBr = Vtree.Branch("PinkCands", pcv)
 candCfg = {
    "filter" : "i.pt() > 1",
-   "color" : ROOT.kViolet,
-   "purpose" : "Candidate"
+   "color" : ROOT.kViolet
 }
 candBr.SetTitle(json.dumps(candCfg))
 
-# resue cand vectir for ECAL
-ecalBr = Vtree.Branch("ChargedCands", pcv)
+
+# calorimeter towers
+ctv = ROOT.std.vector('VsdCaloTower')()
+ecalBr = Vtree.Branch("CaloTowers", ctv)
 ecalCfg = {
-   "color" : ROOT.kRed,
-   "filter" : "i.charge() != 0",
-   "purpose" : "CaloTower"
+   "color" : ROOT.kCyan
 }
 ecalBr.SetTitle(json.dumps(ecalCfg))
-# resue cand vectir for HCAL
-hcalBr = Vtree.Branch("NeutralCands", pcv)
-hcalCfg = {
-   "color" : ROOT.kBlue,
-   "filter" : "i.charge() > 0",
-   "purpose" : "CaloTower"
-}
-hcalBr.SetTitle(json.dumps(hcalCfg))
-
-
 
 gjv = ROOT.std.vector('VsdJet')()
 Vtree.Branch("YellowJets", gjv)
@@ -63,8 +52,8 @@ vtxCfg = {
 vertBr.SetTitle(json.dumps(vtxCfg))
 
 for i in range(10):
-
     pcv.clear()
+    ctv.clear()
     gjv.clear()
     tmv.clear()
     umv.clear()
@@ -80,6 +69,8 @@ for i in range(10):
         cnd.name = f"Candidate_{j}"
         cnd.setPos(ROOT.gRandom.Uniform(0.1, 20),ROOT.gRandom.Uniform(0.1, 20), ROOT.gRandom.Uniform(0.1, 20))
         pcv.push_back(cnd)
+        tower = ROOT.VsdCaloTower(cnd.pt(), cnd.eta(), cnd.phi())
+        ctv.push_back(tower);
 
     for j in range(3 + ROOT.gRandom.Integer(6)):
         jet = ROOT.VsdJet(

@@ -91,6 +91,17 @@ public:
 };
 
 /////////////////////////////////////////////////
+// Simple class to separate the purpose of calorimiter
+// tower visualization.
+class VsdCaloTower : public VsdCandidate
+{
+public:
+   VsdCaloTower() = default;
+   VsdCaloTower& operator=(const VsdCaloTower&) = default;
+   VsdCaloTower(float pt, float eta, float phi) : VsdCandidate(pt, eta, phi){}
+};
+
+/////////////////////////////////////////////////
 class VsdJet : public VsdCandidate
 {
 // private:
