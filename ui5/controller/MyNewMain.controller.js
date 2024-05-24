@@ -143,7 +143,7 @@ let pthis = this;
 		//	this.byId("myPopover").close();
 
          let inmd =  this.fw2gui.childs[0];
-         this.mgr.SendMIR("Calculate()", inmd.fElementId, "FWInvMassDialog");
+         this.mgr.SendMIR("Calculate()", inmd.fElementId, "FWVsdInvMassDialog");
       },
 
       invMassDialogRefresh : function()

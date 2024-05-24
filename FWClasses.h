@@ -6,7 +6,7 @@
 #include "VsdProvider.h"
 #include "FWDataCollection.h"
 #include "lego_bins.h"
-#include "FWInvMassDialog.h"
+#include "FWVsdInvMassDialog.h"
 #include "FWCollectionManager.h"
 #include "FWContext.h"
 

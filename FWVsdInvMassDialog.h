@@ -1,5 +1,5 @@
-#ifndef VSDInvMassDialog
-#define VSDInvMassDialog
+#ifndef VSDInvMassDialog_h
+#define VSDInvMassDialog_h
 
 #include "ROOT/REveElement.hxx"
 #include "ROOT/REveManager.hxx"
@@ -9,7 +9,7 @@
 
 using namespace ROOT::Experimental;
 
-class FWInvMassDialog : public REveElement
+class FWVsdInvMassDialog : public REveElement
 {
    public:
    void Calculate()

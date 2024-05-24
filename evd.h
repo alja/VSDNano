@@ -34,7 +34,7 @@ void evd(const char *data_path)
    eventMng->UpdateTitle();
    eventMng->SetName(data_path);
 
-   auto massDialog = new FWInvMassDialog();
+   auto massDialog = new FWVsdInvMassDialog();
    eventMng->AddElement(massDialog);
    eveMng->GetWorld()->AddElement(eventMng);
 
