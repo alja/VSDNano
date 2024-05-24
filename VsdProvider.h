@@ -1,12 +1,15 @@
+#ifndef VSDProvider_hh
+#define VSDProvider_hh
+
 #include "VsdBase.h"
 #include "TClass.h"
 #include "TVirtualCollectionProxy.h"
 #include "TBranchElement.h"
 #include "TPRegexp.h"
+#include "TFile.h"
 #include "nlohmann/json.hpp"
 
-
-VsdProvider *g_provider = nullptr;
+#include <iostream>
 
 struct ColBranchInfo
 {
@@ -192,3 +195,5 @@ public:
 
     virtual Long64_t GetNumEvents() { return m_vsdTree->GetEntriesFast(); }
 };
+
+#endif

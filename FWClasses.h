@@ -1,8 +1,14 @@
+#ifndef FWEventManager_h
+#define FWEventManager_h
+
 #include "VsdBase.h"
 #include "VsdProxies.h"
 #include "VsdProvider.h"
 #include "FWDataCollection.h"
 #include "lego_bins.h"
+#include "FWInvMassDialog.h"
+#include "FWCollectionManager.h"
+#include "FWContext.h"
 
 #include "ROOT/REveDataCollection.hxx"
 #include "ROOT/REveDataSimpleProxyBuilderTemplate.hxx"
@@ -23,7 +29,6 @@
 #include <ROOT/REveViewer.hxx>
 #include <ROOT/REveViewContext.hxx>
 #include <ROOT/REveDataCollection.hxx>
-#include <ROOT/REveSelection.hxx>
 #include <ROOT/REveManager.hxx>
 
 // #include "TTree.h"
@@ -39,375 +44,39 @@
 #include "TEnv.h"
 using namespace ROOT::Experimental;
 
-// globals
-ROOT::Experimental::REveManager* eveMng;
-ROOT::Experimental::REveProjectionManager* mngRhoZ;
-ROOT::Experimental::REveProjectionManager* mngRPhi;
-ROOT::Experimental::REveViewContext* viewContext;
-ROOT::Experimental::REveCaloDataHist* caloData;
-
-//==============================================================================
-//== Selection =================================================================
-//==============================================================================
-
-class FWSelectionDeviator : public REveSelection::Deviator {
-public:
-   FWSelectionDeviator() {}
-
-   using REveSelection::Deviator::DeviateSelection;
-   bool DeviateSelection(REveSelection *selection, REveElement *el, bool multi, bool secondary,
-                         const std::set<int> &secondary_idcs)
-   {
-      if (el) {
-         auto *colItems = dynamic_cast<REveDataItemList *>(el);
-         if (colItems) {
-            // std::cout << "Deviate RefSelected=" << colItems->RefSelectedSet().size() << " passed set " << secondary_idcs.size() << "\n";
-            ExecuteNewElementPicked(selection, colItems, multi, true, colItems->RefSelectedSet());
-            return true;
-         }
-      }
-      return false;
-   }
-};
-
-class InvMassDialog : public REveElement
-{
-   public:
-   void Calculate()
-   {
-      fTitle = "<pre>";
-      printf("FWWebInvMassDialog::calculate() .... \n");
-      double sum_len = 0;
-      double sum_len_xy = 0;
-      int n = 0;
-      REveVector first, second, sum;
-      addLine("");
-      addLine("--------------------------------------------------+--------------");
-      addLine("       px          py          pz          pT     | Collection");
-      addLine("--------------------------------------------------+--------------");
-
-      TClass *rc_class = TClass::GetClass(typeid(VsdCandidate));
-      auto s = ROOT::Experimental::gEve->GetScenes()->FindChild("Collections");
-      for (auto &c : s->RefChildren())
-      {
-         REveDataCollection *coll = (REveDataCollection *)(c);
-         auto items = coll->GetItemList();
-         for (auto &au : items->RefAunts())
-         {
-            if (au == ROOT::Experimental::gEve->GetSelection())
-            {
-                std::cout << c->GetName() << " " << items->GetImpliedSelected() << " --- " << items->RefSelectedSet().size() << "\n";
-                for (auto &ss : items->RefSelectedSet())
-                {
-                    TString line;
-                    TClass *model_class = coll->GetItemClass();
-                    // std::cout << "item with type " << model_class->GetName() << "\n";
-                    void *model_data = const_cast<void *>(coll->GetDataPtr(ss));
-                    REveVector v;
-
-                    VsdCandidate *rc = reinterpret_cast<VsdCandidate *>(model_class->DynamicCast(rc_class, model_data));
-
-                    float theta = EtaToTheta(rc->eta());
-                    float pz = rc->pt() / TMath::Tan(theta);
-                    float px = rc->pt() * TMath::Cos(rc->phi());
-                    float py = rc->pt() * TMath::Sin(rc->phi());
-
-                    if (rc != nullptr)
-                    {
-                        v.Set(px, py, pz);
-                        rc->dump();
-
-                        sum += v;
-                        sum_len += TMath::Sqrt(v.Mag2());
-                        sum_len_xy += TMath::Sqrt(v.Perp2());
-
-                        line = TString::Format("  %+10.3f  %+10.3f  %+10.3f  %10.3f", v.fX, v.fY, v.fZ, TMath::Sqrt(v.Perp2()));
-                    }
-                    else
-                    {
-                        line = TString::Format("  -------- not a VsdCandidate --------");
-                    }
-                    line += TString::Format("  | %s[%d]", coll->GetCName(), ss);
-
-                    addLine(line);
-
-                    if (n == 0)
-                        first = v;
-                    else if (n == 1)
-                        second = v;
-                }
-
-                break;
-            }
-         }
-      }
-
-      addLine("--------------------------------------------------+--------------");
-      addLine(TString::Format(
-          "  %+10.3f  %+10.3f  %+10.3f  %10.3f  | Sum", sum.fX, sum.fY, sum.fZ, TMath::Sqrt(sum.Perp2())));
-      addLine("");
-      addLine(TString::Format("m  = %10.3f", TMath::Sqrt(TMath::Max(0.0, sum_len * sum_len - sum.Mag2()))));
-      addLine(TString::Format("mT = %10.3f", TMath::Sqrt(TMath::Max(0.0, sum_len_xy * sum_len_xy - sum.Perp2()))));
-      addLine(TString::Format("HT = %10.3f", sum_len_xy));
-
-      if (n == 2)
-      {
-        // addLine(TString::Format("deltaPhi  = %+6.4f", deltaPhi(first.Phi(), second.Phi()))); //AMT deltaPhi exisiting only in data formats
-         addLine(TString::Format("deltaEta  = %+6.4f", first.Eta() - second.Eta()));
-        // addLine(TString::Format("deltaR    = % 6.4f", deltaR(first.Eta(), first.Phi(), second.Eta(), second.Phi())));
-      }
-
-      fTitle += "</pre>";
-      StampObjProps();
-   }
-
-   void
-   addLine(const TString &line)
-   {
-      fTitle += "\n";
-      fTitle += line.Data();
-   }
-   int WriteCoreJson(nlohmann::json &j, int rnr_offset) override
-   {
-     int ret = REveElement::WriteCoreJson(j, rnr_offset);
-   
-      std::cout << j.dump(4);
-      j["UT_PostStream"] = "UT_refresh_invmass_dialog";
-      return ret;
-   }
-};
-//==============================================================================
-//== Collection Manager =============================================================
-//==============================================================================
-class CollectionManager
-{
-private:
-    VsdProvider *m_event{nullptr};
-    REveElement *m_collections{nullptr};
-
-    std::vector<REveDataProxyBuilderBase *> m_builders;
-
-    bool m_isEventLoading{false}; // don't process model changes when applying filter on new event
-public:
-    CollectionManager(VsdProvider *event) : m_event(event)
-    {
-        m_collections = eveMng->GetScenes()->FindChild("Collections");
-    }
-
-    void LoadCurrentEventInCollection(REveDataCollection *rdc)
-    {
-        m_isEventLoading = true;
-        rdc->ClearItems();
-        VsdCollection *vsdc = m_event->RefColl(rdc->GetName());
-        std::string cname = rdc->GetName();
-        // printf("-------- LoadCurrentEventInCollection %s size %lu\n", rdc->GetCName(), vsdc->m_list.size());
-        std::string t = "dummy";
-        for (auto vsd : vsdc->m_list)
-        {
-            // printf ("add item tp REveColl\n"); vsd->dump();
-            rdc->AddItem(vsd, t, t);
-        }
-        rdc->ApplyFilter();
-        rdc->GetItemList()->StampObjProps();
-
-        m_isEventLoading = false;
-    }
-
-    void RenewEvent()
-    {
-        for (auto &el : m_collections->RefChildren())
-        {
-            auto c = dynamic_cast<REveDataCollection *>(el);
-            LoadCurrentEventInCollection(c);
-        }
-
-        for (auto proxy : m_builders)
-        {
-            proxy->Build();
-        }
-    }
-
-    REveDataProxyBuilderBase *getProxyBuilderFromVSD(VsdCollection *vsdc)
-    {
-        if (vsdc->m_purpose == "Candidate")
-            return new CandidateProxyBuilder();
-        else if (vsdc->m_purpose == "Jet")
-            return new JetProxyBuilder();
-        else if (vsdc->m_purpose == "MET")
-            return new METProxyBuilder();
-        else if (vsdc->m_purpose == "Muon")
-            return new MuonProxyBuilder();
-        else if (vsdc->m_purpose == "Vertex")
-            return new VertexProxyBuilder();
-        else if (vsdc->m_purpose == "CaloTower")
-            return new CaloTowerProxyBuilder(caloData);
-
-        std::cout << typeid(vsdc).name() << '\n';
-
-        // amt alternative way
-        std::string pbn = vsdc->m_purpose + "ProxyBuilder";
-        // TClass* pbc = TClass::GetClass(pbn.c_str());
-
-        printf("can't find proxy for purpose %s \n", vsdc->m_purpose.c_str());
-        return nullptr;
-    }
-
-    void
-    addCollection(VsdCollection *vsdc)
-    {
-        FWDataCollection *collection = new FWDataCollection(vsdc->m_name, vsdc->m_varConfig);
-        m_collections->AddElement(collection);
-        std::string class_name = "Vsd" + vsdc->m_type; // !!! This works beacuse it is a root macro
-
-        // std::cout << "addCollection class name " << class_name << "\n";
-
-        TClass* tc  = TClass::GetClass(class_name.c_str());
-        if (!tc) {
-            // class_name = "VSD" + vsdc->m_purpose; // !!! This works beacuse it is a root macro
-            class_name = vsdc->m_purpose;
-            tc  = TClass::GetClass(class_name.c_str());
-            if (!tc)
-            throw( std::runtime_error("addCollection " +  vsdc->m_name ) );
-        }
-
-        collection->SetItemClass(TClass::GetClass(class_name.c_str()));
-        collection->SetMainColor(vsdc->m_color);
-        collection->SetFilterExpr(vsdc->m_filter.c_str());
-
-        REveDataProxyBuilderBase *glBuilder = getProxyBuilderFromVSD(vsdc);
-
-        // load data
-        LoadCurrentEventInCollection(collection);
-        glBuilder->SetCollection(collection);
-        glBuilder->SetHaveAWindow(true);
-
-        for (auto &scene : eveMng->GetScenes()->RefChildren())
-        {
-
-            // REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), viewContext);
-
-            if (strncmp(scene->GetCName(), "Table", 5) == 0)
-                continue;
-            if (!strncmp(scene->GetCTitle(), "RhoZProjected", 8))
-            {
-                REveElement *product = glBuilder->CreateProduct("RhoZViewType", viewContext);
-                mngRhoZ->ImportElements(product, scene);
-                continue;
-            }
-            if (!strncmp(scene->GetCTitle(), "RPhiProjected", 8))
-            {
-                REveElement *product = glBuilder->CreateProduct("RPhiViewType", viewContext);
-                mngRPhi->ImportElements(product, scene);
-                continue;
-            }
-            else if ((!strncmp(scene->GetCName(), "Event scene", 8)))
-            {
-                REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), viewContext);
-                scene->AddElement(product);
-            }
-        }
-        m_builders.push_back(glBuilder);
-        glBuilder->Build();
-
-        // Tables
-        auto tableBuilder = new REveTableProxyBuilder();
-        tableBuilder->SetHaveAWindow(true);
-        tableBuilder->SetCollection(collection);
-        REveElement *tablep = tableBuilder->CreateProduct("table-type", viewContext);
-        auto tableMng = viewContext->GetTableViewInfo();
-        if (collection == m_collections->FirstChild())
-        {
-            tableMng->SetDisplayedCollection(collection->GetElementId());
-        }
-
-        for (auto &scene : eveMng->GetScenes()->RefChildren())
-        {
-            if (strncmp(scene->GetCTitle(), "Table", 5) == 0)
-            {
-                scene->AddElement(tablep);
-                // tableBuilder->Build(rdc, tablep, viewContext );
-                break;
-            }
-        }
-        tableMng->AddDelegate([=]()
-                              { tableBuilder->ConfigChanged(); });
-        m_builders.push_back(tableBuilder);
-
-        // set tooltip expression for items
-
-        auto tableEntries = tableMng->RefTableEntries(collection->GetItemClass()->GetName());
-        int N = TMath::Min(int(tableEntries.size()), 3);
-        for (int t = 0; t < N; t++)
-        {
-            auto te = tableEntries[t];
-            collection->GetItemList()->AddTooltipExpression(te.fName, te.fExpression);
-        }
-
-        collection->setGLBuilder(glBuilder);
-
-        collection->GetItemList()->SetItemsChangeDelegate([&](REveDataItemList *collection, const REveDataCollection::Ids_t &ids)
-                                                          { this->ModelChanged(collection, ids); });
-        collection->GetItemList()->SetFillImpliedSelectedDelegate([&](REveDataItemList *collection, REveElement::Set_t &impSelSet, const std::set<int> &sec_idcs)
-                                                                  { this->FillImpliedSelected(collection, impSelSet, sec_idcs); });
-    }
-
-    void ModelChanged(REveDataItemList *itemList, const REveDataCollection::Ids_t &ids)
-    {
-        if (m_isEventLoading)
-            return;
-
-        for (auto proxy : m_builders)
-        {
-            if (proxy->Collection()->GetItemList() == itemList)
-            {
-                printf("Model changes check proxy %s: \n", proxy->Collection()->GetCName());
-                proxy->ModelChanges(ids);
-            }
-        }
-    }
-
-    void FillImpliedSelected(REveDataItemList *itemList, REveElement::Set_t &impSelSet, const std::set<int> &sec_idcs)
-    {
-
-        for (auto proxy : m_builders)
-        {
-            if (proxy->Collection()->GetItemList() == itemList)
-            {
-                proxy->FillImpliedSelected(impSelSet, sec_idcs);
-            }
-        }
-    }
-};
-
 //==============================================================================
 //== Event Manager =============================================================
 //==============================================================================
 
-class EventManager : public REveElement
+class FWEventManager : public REveElement
 {
 private:
-   CollectionManager    *m_collectionMng{nullptr};
+   FWCollectionManager    *m_collectionMng{nullptr};
    VsdProvider          *m_event{nullptr};
+   FWContext          *m_ctx{nullptr};
    std::chrono::duration<double> m_deltaTime;
    std::thread *m_timerThread{nullptr};
    std::mutex m_mutex;
    std::condition_variable m_CV;
    bool m_autoplay{false};
-   
 
-public:
-   EventManager(CollectionManager* m, VsdProvider* e):REveElement("EventManager") {m_collectionMng  = m; m_event = e;m_deltaTime = std::chrono::milliseconds(1000);}
-   virtual ~EventManager() {}
+   public:
+
+   FWEventManager(FWCollectionManager *m, VsdProvider *e, FWContext *ctx) : REveElement("EventManager"),
+                                                                            m_collectionMng(m),
+                                                                            m_event(e),
+                                                                            m_ctx(ctx)
+   {
+       m_deltaTime = std::chrono::milliseconds(1000);
+   }
 
    virtual void GotoEvent(int id)  
    {
       m_event->GotoEvent(id);
       UpdateTitle();
       m_collectionMng->RenewEvent();
-      caloData->DataChanged();
+      m_ctx->caloData->DataChanged();
    }
-
-
   void UpdateTitle()
    {
       // printf("======= update title %lld/%lld event ifnfo run=[%d], lumi=[%d], event = [%lld]\n", m_event->m_eventIdx, m_event->GetNumEvents(),
@@ -518,138 +187,5 @@ public:
       m_CV.notify_all();
    }
 };
-
-//==============================================================================
-//== init scenes and views  =============================================================
-//==============================================================================
-void createScenesAndViews()
-{
-   //view context
-   float r = 139.5;
-   float z = 290;
-   auto prop = new REveTrackPropagator();
-   prop->SetMagFieldObj(new REveMagFieldDuo(350, -3.5, 2.0));
-   prop->SetMaxR(r);
-   prop->SetMaxZ(z);
-   prop->SetMaxOrbs(6);
-   prop->IncRefCount();
-
-
-
-   viewContext = new REveViewContext();
-   viewContext->SetBarrel(r, z);
-   viewContext->SetTrackPropagator(prop);
-
-   // table specs
-   auto tableInfo = new REveTableViewInfo();
-   tableInfo->table("VsdVertex").
-      column("x",  1, "i.x()").
-      column("y",  1, "i.y()").
-      column("z",  1, "i.z()");
-
-   tableInfo->table("VsdCandidate").
-      column("pt",  1, "i.pt()").
-      column("eta", 3, "i.eta()").
-      column("phi", 3, "i.phi()").
-      column("charge", 3, "i.charge()");
-
-   tableInfo->table("VsdElectron").
-      column("pt",  1, "i.pt()").
-      column("eta", 3, "i.eta()").
-      column("phi", 3, "i.phi()").
-      column("HoE", 3, "i.hadronicOverEm()");
-
-   tableInfo->table("VsdMET").
-      column("pt",  1, "i.pt()").
-      column("sumEt", 3, "i.sumEt()").
-      column("phi", 3, "i.phi()");
-
-   tableInfo->table("VsdJet").
-      column("pt",  1, "i.pt()").
-      column("eta", 3, "i.eta()").
-      column("phi", 3, "i.phi()").
-      column("hadFraction", 3, "i.hadFraction()");
-
-   viewContext->SetTableViewInfo(tableInfo);
-
-
-    auto baseHist = new TH2F("dummy", "dummy", fw3dlego::xbins_n - 1, fw3dlego::xbins, 72, -TMath::Pi(), TMath::Pi());
-    caloData = new REveCaloDataHist();
-    caloData->AddHistogram(baseHist);
-    auto selector = new REveCaloDataSelector();
-    caloData->SetSelector(selector);
-    eveMng->GetWorld()->AddElement(caloData);
-
-   auto calo3d = new REveCalo3D(caloData);
-   calo3d->SetBarrelRadius(r);
-   calo3d->SetEndCapPos(z);
-   calo3d->SetMaxTowerH(300);
-   eveMng->GetEventScene()->AddElement(calo3d);
-
-   // Geom  ry
-   auto b1 = new REveGeoShape("Barrel 1");
-   b1->SetShape(new TGeoTube(r -2 , r+2, z));
-   b1->SetMainColor(kCyan);
-   // eveMng->GetGlobalScene()->AddElement(b1);
-
-   // Projected RPhi
-   if (1)
-   {
-      auto rPhiEventScene = eveMng->SpawnNewScene("RPhi Scene", "RPhiProjected");
-      mngRPhi = new REveProjectionManager(REveProjection::kPT_RPhi);
-
-      mngRPhi->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
-      mngRPhi->GetProjection()->AddPreScaleEntry(0, 300, 0.6);
-
-      mngRPhi->SetImportEmpty(true);
-      auto rPhiView = eveMng->SpawnNewViewer("RPhi View");
-      rPhiView->SetCameraType(REveViewer::kCameraOrthoXOY);
-      rPhiView->AddScene(rPhiEventScene);
-
-      auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry");
-       mngRPhi->SetCurrentDepth(-4);
-      mngRPhi->ImportElements(b1,pgeoScene );
-      rPhiView->AddScene(pgeoScene);
-       mngRPhi->SetCurrentDepth(-1);
-      mngRPhi->ImportElements(calo3d, rPhiEventScene);
-       mngRPhi->SetCurrentDepth(0);
-   }
-   // Projected RhoZ
-   if (1)
-   {
-       auto rhoZEventScene = eveMng->SpawnNewScene("RhoZ Scene", "RhoZProjected");
-       mngRhoZ = new REveProjectionManager(REveProjection::kPT_RhoZ);
-
-       mngRhoZ->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
-       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 310, 1.0);
-       mngRhoZ->GetProjection()->AddPreScaleEntry(0, 370, 0.6);
-       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 580, 0.4);
-
-       mngRhoZ->SetImportEmpty(true);
-       auto rhoZView = eveMng->SpawnNewViewer("RhoZ View");
-       rhoZView->SetCameraType(REveViewer::kCameraOrthoXOY);
-       rhoZView->AddScene(rhoZEventScene);
-
-       auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry");
-       mngRhoZ->SetCurrentDepth(-4);
-       mngRhoZ->ImportElements(b1, pgeoScene);
-       rhoZView->AddScene(pgeoScene);
-       mngRhoZ->SetCurrentDepth(-1);
-       mngRhoZ->ImportElements(calo3d, rhoZEventScene);
-       mngRhoZ->SetCurrentDepth(0);
-   }
-      // collections
-   eveMng->SpawnNewScene("Collections", "Collections");
-
-   // Table
-   if (1) {
-      auto tableScene = eveMng->SpawnNewScene ("Tables", "Tables");
-      auto tableView  = eveMng->SpawnNewViewer("Table", "Table View");
-      tableView->AddScene(tableScene);
-      tableScene->AddElement(viewContext->GetTableViewInfo());
-   }
-
-    //((REveViewer*)(eveMng->GetViewers()->FirstChild()))->SetMandatory(false);
-}
 ////////////////////////////////////////////////////
-////////////////////////////////////////////////////
+#endif

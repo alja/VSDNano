@@ -18,8 +18,8 @@ libVsdDict.so: VsdDict.cc
 
 ### Graphical Dict
 
-FWDict.cc FWDict_rdict.pcm &: FWClasses.h FWDataCollection.h FW_Linkdef.h
-	rootcling -I. -f FWDict.cc FWClasses.h FWDataCollection.h FW_Linkdef.h
+FWDict.cc FWDict_rdict.pcm &: FWClasses.h FWDataCollection.h FWInvMassDialog.h  FW_Linkdef.h
+	rootcling -I. -f FWDict.cc FWClasses.h FWDataCollection.h FWInvMassDialog.h FW_Linkdef.h
 
 libFWDict.so: FWDict.cc
 	c++ -shared -fPIC -o libFWDict.so ${ROOT_CFLAGS} FWDict.cc
@@ -34,6 +34,9 @@ UserVsd.root: UserVsd.py
 ## run event display
 evd: UserVsd.root libVsdDict.so libFWDict.so
 	root.exe 'evd.h("UserVsd.root")'
+
+test: test.cc libVsdDict.so libFWDict.so
+	c++ ${ROOT_CFLAGS} `root-config --libs`  -lROOTEve -lROOTWebDisplay -lGeom -o $@ test.cc lego_bins.h
 
 service: service.cc evd.h libVsdDict.so libFWDict.so
 	c++ ${ROOT_CFLAGS} `root-config --libs`  -lROOTEve -lROOTWebDisplay -lGeom -o $@ service.cc lego_bins.h

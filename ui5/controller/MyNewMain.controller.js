@@ -39,7 +39,7 @@ let pthis = this;
          // could loop all the elements in top level and check for typename
          var last = world.length -1;
 
-         if (world[last]._typename == "EventManager") {
+         if (world[last]._typename == "FWEventManager") {
             this.fw2gui = (world[last]);
             this.showEventInfo();
          }
@@ -103,11 +103,11 @@ let pthis = this;
       },
 
       nextEvent : function(oEvent) {
-          this.mgr.SendMIR("NextEvent()", this.fw2gui.fElementId, "EventManager");
+          this.mgr.SendMIR("NextEvent()", this.fw2gui.fElementId, "FWEventManager");
       },
 
       prevEvent : function(oEvent) {
-         this.mgr.SendMIR("PreviousEvent()", this.fw2gui.fElementId, "EventManager");
+         this.mgr.SendMIR("PreviousEvent()", this.fw2gui.fElementId, "FWEventManager");
       },
 
       toggleGedEditor: function() {
@@ -143,7 +143,7 @@ let pthis = this;
 		//	this.byId("myPopover").close();
 
          let inmd =  this.fw2gui.childs[0];
-         this.mgr.SendMIR("Calculate()", inmd.fElementId, "InvMassDialog");
+         this.mgr.SendMIR("Calculate()", inmd.fElementId, "FWInvMassDialog");
       },
 
       invMassDialogRefresh : function()
@@ -159,13 +159,13 @@ let pthis = this;
 
       autoplay: function (oEvent) {
          console.log("AUTO", oEvent.getParameter("selected"));
-         this.mgr.SendMIR("autoplay(" + oEvent.getParameter("selected") + ")", this.fw2gui.fElementId, "EventManager");
+         this.mgr.SendMIR("autoplay(" + oEvent.getParameter("selected") + ")", this.fw2gui.fElementId, "FWEventManager");
       },
 
       playdelay: function (oEvent) {
          console.log("playdelay ", oEvent.getParameter("value"));
          let pd_milisec = oEvent.getParameter("value") * 1000;
-         this.mgr.SendMIR("playdelay(" + pd_milisec + ")", this.fw2gui.fElementId, "EventManager");
+         this.mgr.SendMIR("playdelay(" + pd_milisec + ")", this.fw2gui.fElementId, "FWEventManager");
       },
 
    });

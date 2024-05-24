@@ -283,7 +283,7 @@ sap.ui.define([
            console.log(xxx);
            let cmd = "FilterPublished(\"" + xxx + "\")";
 
-           this.mgr.SendMIR(cmd, this.fw2gui.fElementId, "EventManager");
+           this.mgr.SendMIR(cmd, this.fw2gui.fElementId, "FWEventManager");
        },
 
        setFilterEnabled: function(oEvent)

@@ -1,41 +1,45 @@
 #include "FWClasses.h"
+#include "TEnv.h"
+#include "TROOT.h"
+#include "TFile.h"
+#include "TApplication.h"
+#include "TTree.h"
+#include "TFile.h"
+#include "ROOT/REveManager.hxx"
+using namespace ROOT::Experimental;
 
 ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
-void evd(const char* data_path)
+void evd(const char *data_path)
 {
-gSystem->Load("libVsdDict.so");
-gSystem->Load("libFWDict.so");
+   gSystem->Load("libVsdDict.so");
+   gSystem->Load("libFWDict.so");
 
-   VsdProvider* prov = new VsdProvider(data_path);
-   eveMng = REveManager::Create();
+   VsdProvider *prov = new VsdProvider(data_path);
+   REveManager* eveMng = REveManager::Create();
 
+   ROOT::RWebWindowsManager::SetLoopbackMode(false);
+   ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false);
 
-	   ROOT::RWebWindowsManager::SetLoopbackMode(false);
-	      ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false); 
-    ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("10.3");
-    std::string locPath = "ui5";
-    eveMng->AddLocation("unidir/", locPath);
-    eveMng->SetDefaultHtmlPage("file:unidir/eventDisplay.html");
-//  gEnv->SetValue("WebGui.HttpMaxAge", 3600);
+   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("10.4");
+   std::string locPath = "ui5";
+   eveMng->AddLocation("unidir/", locPath);
+   eveMng->SetDefaultHtmlPage("file:unidir/eventDisplay.html");
 
+   FWContext *ctx = new FWContext();
+   ctx->createScenesAndViews();
+   auto collectionMng = new FWCollectionManager(prov, ctx);
 
-   createScenesAndViews();
-   auto collectionMng = new CollectionManager(prov);
-
-   auto eventMng = new EventManager(collectionMng, prov);
+   auto eventMng = new FWEventManager(collectionMng, prov, ctx);
    eventMng->UpdateTitle();
    eventMng->SetName(data_path);
 
-  auto massDialog = new InvMassDialog();
-  eventMng->AddElement(massDialog);
-  eveMng->GetWorld()->AddElement(eventMng);
+   auto massDialog = new FWInvMassDialog();
+   eventMng->AddElement(massDialog);
+   eveMng->GetWorld()->AddElement(eventMng);
 
-  auto deviator = std::make_shared<FWSelectionDeviator>();
-  eveMng->GetSelection()->SetDeviator(deviator);
-  eveMng->GetHighlight()->SetDeviator(deviator);
-  for (auto &vsdc : prov->m_collections)
-  {
+   for (auto &vsdc : prov->m_collections)
+   {
       // printf("vsd collection ====== %s\n", vsdc->m_name.c_str());
       if (vsdc->m_purpose == "EventInfo")
          continue;
