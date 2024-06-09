@@ -33,7 +33,7 @@ $CERN_GName = $ENV{'OIDC_CLAIM_given_name'};
 $CERN_FName = $ENV{'OIDC_CLAIM_family_name'};
 
 $REDIR_HOST  = $ENV{'SERVER_NAME'};
-$LOGFILE_WWW = "/logs/" . $CERN_UPN;
+$LOGFILE_WWW = "/alja/logs/" . $CERN_UPN;
 $LOGFILE_PFX = $ENV{'DOCUMENT_ROOT'} . $LOGFILE_WWW;
 $CONFIG_WWW = "/config/";
 
@@ -51,24 +51,6 @@ $SOURCES = {}; # name -> prefix mapping
 $error_str;
 
 
-
-if ($REDIR_HOST eq "fireworks.ucsd.edu" or $REDIR_HOST eq "phi1.t2.ucsd.edu")
-{
-  $SOURCES->{'XCache_UCSD'} = {
-    'desc'   => "Open LFN /store/... via XCache at UCSD",
-    'prefix' => "root://xcache-00.t2.ucsd.edu/"
-  };
-  $SOURCES->{'AAA_FNAL'} = { # requires cert
-    'desc'   => "Open LFN /store/... via AAA regional US redirector at FNAL",
-    'prefix' => "root://cmsxrootd.fnal.gov:1094/"
-  };
-
-  $PORT_MAP_FOO = sub {
-    my $resp = shift;
-    return "https://${REDIR_HOST}:$resp->{'port'}/$resp->{'dir'}?token=$resp->{'key'}";
-  };
-}
-elsif ($REDIR_HOST eq "fireworks.cern.ch")
 {
   $SOURCES->{'EOS'} = {
     'desc'   => "Open CERN EOS LFN (/store/...) or PFN (/eos/...)",
@@ -83,21 +65,17 @@ elsif ($REDIR_HOST eq "fireworks.cern.ch")
 
   $PORT_MAP_FOO = sub {
     my $resp = shift;
+     return "https://${REDIR_HOST}:$resp->{'port'}/$resp->{'dir'}?token=$resp->{'key'}";
     my ($port_rem) = $resp->{'port'} =~ m/(\d\d)$/;
     return "https://${REDIR_HOST}/host${port_rem}/$resp->{'dir'}?token=$resp->{'key'}";
   };
 }
-else
-{
-  $CONFIG_ERROR = "unconfigured host";
-}
-
 $PRINT_URL_ARGS = 0;
 $PRINT_ENV      = 0;
 $PRINT_TUNNEL_SUGGESTION = 0;
 
 # Sample dir setup the same way on phi1 and on fireworks
-$SAMPLE_DIR = "/home/viz/universal-format/samples/";
+$SAMPLE_DIR = "/home/alja/root-dev/samples/";
 
 @SAMPLES = qw{
 UserVsd-0.root
