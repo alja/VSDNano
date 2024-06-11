@@ -13,7 +13,7 @@
 #include <ROOT/RFileDialog.hxx>
 #include "nlohmann/json.hpp"
 
-#include "evd.h"
+// #include "evd.h"
 
 #include <cstdio>
 #include <ctime>
@@ -366,8 +366,8 @@ void revetor()
    // also do REveManager::Create() here.
    TApplication app("REveService", 0, 0);
 
-   gSystem->Load("libVsdDict.so");
-   gSystem->Load("libFWDict.so");
+  // gSystem->Load("libVsdDict.so");
+   //gSystem->Load("libFWDict.so");
    //auto *ff = TFile::Open("/home/viz/universal-format/samples//UserVsd-0.root");
    //ff->Close();
    //delete ff;
@@ -635,12 +635,18 @@ void revetor()
                // gROOT->LoadMacro("evd.h");
                std::string dataPath = req["file"].get<std::string>();
                printf( "dataPath = %s \n", dataPath.c_str());
-               evd(dataPath.c_str());
+               //evd(dataPath.c_str());
+               std::string macroPath = "/home/alja/root-dev/root/tutorials/eve7/";
+               macroPath += dataPath;
+               macroPath += ".C";
+   gROOT->LoadMacro(macroPath.c_str());
+   std::string fname = dataPath + "()";
+   gROOT->ProcessLine(fname.c_str());
 
-               auto gui = REX::gEve->GetWorld()->LastChild();
-               std::string lp = logdirurl + log_fname;
-               auto le = new REX::REveElement(lp, lp);
-               gui->AddElement(le);
+               //auto gui = REX::gEve->GetWorld()->LastChild();
+               //std::string lp = logdirurl + log_fname;
+               //auto le = new REX::REveElement(lp, lp);
+              // gui->AddElement(le);
 
 
                // Connection key
