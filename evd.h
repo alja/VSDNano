@@ -46,5 +46,5 @@ gSystem->Load("libFWDict.so");
    //((REveViewer*)(ROOT::Experimental::gEve->GetViewers()->FirstChild()))->SetMandatory(false);
 
    gEnv->SetValue("WebEve.DisableShow", 1);
-   eveMng->Show();
+   //eveMng->Show();
 }
