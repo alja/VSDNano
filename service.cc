@@ -516,6 +516,51 @@ void revetor()
             delete s;
             ACCEPT_NEW = false;
          }
+         else if(req["action"] == "dataformat")
+         {
+            pid_t pid = fork();
+
+            if (pid)
+            {
+               s->Close();
+               delete s;
+            }
+            else
+            {
+               sigaction(SIGCHLD, &sa_chld, NULL);
+               sigaction(SIGINT, &sa_int, NULL);
+               sigaction(SIGTERM, &sa_term, NULL);
+
+               // Close the server socket.
+               ss->Close();
+
+               // test
+               std::string dataPath = req["file"].get<std::string>();
+               TFile::SetReadStreamerInfo(false);
+               TFile* file = TFile::Open(dataPath.c_str());
+
+               std::string format = "edm";
+               if (file == nullptr)
+               {
+                  format = "invalid";
+               }
+               else {
+                  TObject* x =  file->Get("VSD");
+                  if (x)
+                     format = "vsd";
+               }
+
+               char pmsg[1024];
+               snprintf(pmsg, 1024, "{ 'format'=>'%s' }\n", format.c_str());
+               SendRawString(s, pmsg);
+
+
+               s->Close();
+               delete s;
+               printf("exit format definition\n");
+               exit(0);
+            }
+         }
          else if (req["action"] == "load")
          {
             int n_active = KillIdleProcesses();
