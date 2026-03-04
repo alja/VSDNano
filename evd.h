@@ -9,6 +9,7 @@ gSystem->Load("libFWDict.so");
 
    VsdProvider* prov = new VsdProvider(data_path);
    eveMng = REveManager::Create();
+   eveMng->AllowMultipleRemoteConnections(false, false);
 
 
 	   ROOT::RWebWindowsManager::SetLoopbackMode(false);
@@ -46,5 +47,5 @@ gSystem->Load("libFWDict.so");
    //((REveViewer*)(ROOT::Experimental::gEve->GetViewers()->FirstChild()))->SetMandatory(false);
 
    gEnv->SetValue("WebEve.DisableShow", 1);
-   //eveMng->Show();
+   eveMng->Show();
 }

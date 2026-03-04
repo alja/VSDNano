@@ -31,6 +31,7 @@
 #include "ROOT/REveSelection.hxx"
 #include "ROOT/REveVector.hxx"
 #include "ROOT/REveEllipsoid.hxx"
+#include <ROOT/RLogger.hxx>
 #include "TGeoBBox.h"
 #include "TGeoTube.h"
 #include "TGeoSphere.h"
@@ -173,7 +174,7 @@ public:
          TVectorD eigValsVec(mtx.GetEigenValues());
          if (eigValsVec.Min() < 0)
          {
-            R__LOG_TO_CHANNEL(ROOT::Experimental::ELogLevel::kError, ROOT::Experimental::REveLog()) << "Negative error matrix " << item->GetName() << " idx = " << iIndex << "\n";
+            R__LOG_TO_CHANNEL(ROOT::ELogLevel::kError, ROOT::Experimental::REveLog()) << "Negative error matrix " << item->GetName() << " idx = " << iIndex << "\n";
             printf("Negative eigenvalue for collection %s idx %d, skipping draing of error \n", item->GetCName(), iIndex);
          }
          else

@@ -22,6 +22,10 @@ struct ColBranchInfo
         return (VsdBase *)((void *)((long long)m_proxy->At(i) + m_base_offset));
     }
 
+    ColBranchInfo(TBranchElement *i_branch, TClass *i_cclass, TClass* i_eclass, TVirtualCollectionProxy *i_proxy,
+    long long i_base_offset, char *i_collection, std::string i_name) : m_branch(i_branch), m_eclass(i_eclass),
+    m_proxy(i_proxy), m_base_offset(i_base_offset), m_collection(i_collection), m_name(i_name) {}
+
     ColBranchInfo() = default;
 };
 
@@ -75,7 +79,8 @@ public:
                 long long off = ec->GetBaseClassOffset(vsdbase_class, ooo);
                 ec->Destructor(ooo);
 
-                cmap.insert({br->GetName(), {bre, cc, ec, cp, off, bre->GetObject(), br->GetName()}});
+                ColBranchInfo brInfo(bre, cc, ec, cp, off, bre->GetObject(), br->GetName());
+                cmap.insert({br->GetName(), brInfo});
 
                 printf("  post get entry 0 %s %u\n",
                        br->GetName(), cp->Size());
