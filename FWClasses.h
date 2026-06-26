@@ -239,12 +239,8 @@ public:
             return new METProxyBuilder();
         else if (vsdc->m_purpose == "Muon")
             return new MuonProxyBuilder();
-        else if (vsdc->m_purpose == "Segment")
-            return new SegmentProxyBuilder();
         else if (vsdc->m_purpose == "Vertex")
-            return new VertexProxyBuilder(); 
-        else if (vsdc->m_purpose == "Hit")
-            return new HitProxyBuilder();
+            return new VertexProxyBuilder();
         else if (vsdc->m_purpose == "CaloTower")
             return new CaloTowerProxyBuilder(caloData);
 
@@ -603,6 +599,8 @@ void createScenesAndViews()
    prop->SetMaxOrbs(6);
    prop->IncRefCount();
 
+
+
    viewContext = new REveViewContext();
    viewContext->SetBarrel(r, z);
    viewContext->SetTrackPropagator(prop);
@@ -637,20 +635,6 @@ void createScenesAndViews()
       column("phi", 3, "i.phi()").
       column("hadFraction", 3, "i.hadFraction()");
 
-    tableInfo->table("VsdHit").
-      column("x", 1, "i.x()").
-      column("y", 1, "i.y()").
-      column("z", 1, "i.z()");
-
-    tableInfo->table("VsdSegment").
-      column("pt",  1, "i.pt()").
-      column("eta", 3, "i.eta()").
-      column("phi", 3, "i.phi()").
-      column("x",   1, "i.posX()"). // using VsdCandidate's pos fields
-      column("y",   1, "i.posY()").
-      column("tx",  1, "i.tx()").
-      column("ty",  1, "i.ty()");
-
    viewContext->SetTableViewInfo(tableInfo);
 
      
@@ -668,34 +652,10 @@ void createScenesAndViews()
    calo3d->SetMaxTowerH(300);
    eveMng->GetEventScene()->AddElement(calo3d);
 
-   // Load extracted CMS geometry shapes
-   REveGeoShape *geoRPhi = nullptr, *geoRhoZ = nullptr, *geo3D = nullptr;
-   {
-      TFile *geoFile = TFile::Open("cms_extract.root", "READ");
-      if (geoFile && !geoFile->IsZombie()) {
-         auto loadExtract = [&](const char *name) -> REveGeoShape * {
-            auto gse = (REveGeoShapeExtract *)geoFile->Get(name);
-            if (!gse) { printf("cms_extract.root: key '%s' not found\n", name); return nullptr; }
-            return REveGeoShape::ImportShapeExtract(gse, nullptr);
-         };
-         geoRPhi = loadExtract("VSDGeoProj");
-         geoRhoZ = loadExtract("VSDGeoProj"); // replace with VSDGeoRhoZ once generated
-         //geo3D   = loadExtract("VSDGeo");
-         geo3D = loadExtract("VSDGeo3D");
-      } else {
-         printf("Warning: cms_extract.root not found, using fallback barrel\n");
-      }
-   }
-
-   // Fallback simple barrel ring if geo file not available
+   // Geom  ry
    auto b1 = new REveGeoShape("Barrel 1");
-   b1->SetShape(new TGeoTube(r - 2, r + 2, z));
+   b1->SetShape(new TGeoTube(r -2 , r+2, z));
    b1->SetMainColor(kCyan);
-
-   auto geoScene3D = eveMng->SpawnNewScene("Geometry");
-   auto defaultViewer = (REveViewer *)eveMng->GetViewers()->FirstChild();
-   defaultViewer->AddScene(geoScene3D);
-   if (geo3D) geoScene3D->AddElement(geo3D);
 
    REveGeoShape* gse = getExtract("VSDGeo3D");
    std::cout << "Exreact " << gse << "\n"; 
@@ -710,15 +670,18 @@ void createScenesAndViews()
        mngRPhi->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
        mngRPhi->GetProjection()->AddPreScaleEntry(0, 300, 0.6);
 
-      mngRPhi->SetImportEmpty(true);
-      auto rPhiView = eveMng->SpawnNewViewer("RPhi View");
-      rPhiView->SetCameraType(REveViewer::kCameraOrthoXOY);
-      rPhiView->AddScene(rPhiEventScene);
+       mngRPhi->SetImportEmpty(true);
+       auto rPhiView = eveMng->SpawnNewViewer("RPhi View");
+       rPhiView->SetCameraType(REveViewer::kCameraOrthoXOY);
+       rPhiView->AddScene(rPhiEventScene);
 
-      auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry");
-      mngRPhi->SetCurrentDepth(-4);
-      mngRPhi->ImportElements(geoRPhi ? geoRPhi : b1, pgeoScene);
-      rPhiView->AddScene(pgeoScene);
+       auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry RPhi");
+       mngRPhi->SetCurrentDepth(-4);
+       mngRPhi->ImportElements(b1, pgeoScene);
+
+       REveGeoShape *gseProj = getExtract("VSDGeoProj");
+       mngRPhi->ImportElements(gseProj, pgeoScene);
+       rPhiView->AddScene(pgeoScene);
        mngRPhi->SetCurrentDepth(-1);
        mngRPhi->ImportElements(calo3d, rPhiEventScene);
        mngRPhi->SetCurrentDepth(0);
@@ -742,7 +705,10 @@ void createScenesAndViews()
 
        auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry RhoZ");
        mngRhoZ->SetCurrentDepth(-4);
-       mngRhoZ->ImportElements(geoRhoZ ? geoRhoZ : b1, pgeoScene);
+       mngRhoZ->ImportElements(b1, pgeoScene);
+
+       REveGeoShape *gseRhoZ = getExtract("VSDGeo");
+       mngRhoZ->ImportElements(gseRhoZ, pgeoScene);
        rhoZView->AddScene(pgeoScene);
        mngRhoZ->SetCurrentDepth(-1);
        mngRhoZ->ImportElements(calo3d, rhoZEventScene);
