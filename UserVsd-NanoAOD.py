@@ -54,7 +54,8 @@ def progress_bar(i, total, t0, width=40):
     sys.stdout.flush()
 
 t0 = time.time()
-for idx in range(n_entries):
+# for idx in range(n_entries):
+for idx in range(20):
     nano_tree.GetEntry(idx)
 
     if idx % 500 == 0:

@@ -223,10 +223,11 @@ public:
          TMatrixDEigen mtx(symMtx);
 
          TVectorD eigValsVec(mtx.GetEigenValues());
-         if (eigValsVec.Min() < 0)
+         if (eigValsVec.Min() <= 0)
          {
-            R__LOG_TO_CHANNEL(ROOT::ELogLevel::kError, ROOT::Experimental::REveLog()) << "Negative error matrix " << item->GetName() << " idx = " << iIndex << "\n";
-            printf("Negative eigenvalue for collection %s idx %d, skipping draing of error \n", item->GetCName(), iIndex);
+            if (eigValsVec.Min() < 0)
+               R__LOG_TO_CHANNEL(ROOT::ELogLevel::kError, ROOT::Experimental::REveLog()) << "Negative error matrix " << item->GetName() << " idx = " << iIndex << "\n";
+            printf("Non-positive eigenvalue for collection %s idx %d, skipping error ellipsoid\n", item->GetCName(), iIndex);
          }
          else
          {
