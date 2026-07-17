@@ -107,7 +107,18 @@ void write_geo_extract_full()
       "cms:OCMS/tracker:Tracker_1/trackerother:TrackerOuterCylinder_1",
       "cms:OCMS/tracker:Tracker_1/trackerbulkhead:TrackerBulkhead_2",
       "cms:OCMS/tracker:Tracker_1/trackerbulkhead:TrackerBulkhead_1",
-      "cms:OCMS/tracker:Tracker_1/tib:TIB_1"
+      // Pixel detector
+      "cms:OCMS/tracker:Tracker_1/pixbar:PixelBarrel_1",
+      // TIB (Tracker Inner Barrel)
+      "cms:OCMS/tracker:Tracker_1/tib:TIB_1",
+      // TID (Tracker Inner Disks)
+      "cms:OCMS/tracker:Tracker_1/tidf:TIDF_1",
+      "cms:OCMS/tracker:Tracker_1/tidb:TIDB_2",
+      // TOB (Tracker Outer Barrel)
+      "cms:OCMS/tracker:Tracker_1/tob:TOB_1",
+      // TEC (Tracker Endcaps)
+      "cms:OCMS/tracker:Tracker_1/tec:TEC_1",
+      "cms:OCMS/tracker:Tracker_1/tec:TEC_2"
    };
 
    // ---------------- MUON ----------------
@@ -158,6 +169,7 @@ void write_geo_extract_full()
    //auto all = makeShape("cms:OCMS", "CMS");
    all->SetRnrSelf(false);
    all->AddElement(tracker);
+   // all->AddElement(pixel);
    all->AddElement(muon);
    all->AddElement(ecal);
    all->AddElement(hcal);
@@ -170,6 +182,12 @@ void write_geo_extract_full()
    tracker->FindChild("TrackerBulkhead_1")->SetRnrSelf(false);
    tracker->FindChild("TrackerBulkhead_2")->SetRnrSelf(false);
    tracker->FindChild("TIB_1")->SetMainTransparency(90);
+   tracker->FindChild("PixelBarrel_1")->SetRnrSelf(90);
+   tracker->FindChild("TIDF_1")->SetRnrSelf(false);
+   tracker->FindChild("TIDB_2")->SetRnrSelf(false);
+   tracker->FindChild("TOB_1")->SetRnrSelf(false);
+   tracker->FindChild("TEC_1")->SetRnrSelf(false);
+   tracker->FindChild("TEC_2")->SetRnrSelf(false);
 
    muon->FindChild("MBWheel_2P_5")->SetRnrSelf(false);
    muon->FindChild("MBWheel_1P_4")->SetRnrSelf(false);
@@ -192,7 +210,13 @@ void write_geo_extract_full()
    all->WriteExtract("VSDGeoProj");
 
 // 3D
+   tracker->FindChild("PixelBarrel_1")->SetRnrSelf(false);
    tracker->FindChild("TIB_1")->SetRnrSelf(false);
+   tracker->FindChild("TIDF_1")->SetRnrSelf(false);
+   tracker->FindChild("TIDB_2")->SetRnrSelf(false);
+   tracker->FindChild("TOB_1")->SetRnrSelf(false);
+   tracker->FindChild("TEC_1")->SetRnrSelf(false);
+   tracker->FindChild("TEC_2")->SetRnrSelf(false);
    tracker->FindChild("TrackerOuterCylinder_1")->SetMainTransparency(95);
    muon->SetRnrChildren(false);
 ecal->SetRnrChildren(false);
