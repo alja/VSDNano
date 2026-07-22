@@ -73,10 +73,13 @@ let pthis = this;
                viewName: "custom.view.EventFilter",
             }).then(function (oView) {
                pthis.eventFilter = oView.getController();
+               pthis.eventFilter.setManager(pthis.mgr);
                pthis.eventFilter.setGUIElement(pthis.fw2gui);
               // console.log(oView, "filter dialog", oView.byId("filterDialog"));
                pthis.eventFilter.makeTables();
                pthis.eventFilter.openFilterDialog();
+            }).catch(function (e) {
+               console.error("Failed to open filter dialog:", e);
             });
          }
       },
