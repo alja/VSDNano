@@ -519,6 +519,11 @@ public:
       StampObjProps();
       m_CV.notify_all();
    }
+
+   void FilterPublished(const char* data)
+   {
+      std::cout << "FilterPublished received: " << data << std::endl;
+   }
 };
 
 REveGeoShape* getExtract(const char* extract_name)

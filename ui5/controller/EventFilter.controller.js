@@ -19,6 +19,10 @@ sap.ui.define([
           console.log("filter controller");
       },
 
+      setManager: function(mgr) {
+          this.mgr = mgr;
+      },
+
       setGUIElement: function(gui) {
           console.log("Event Filter FW2GUI ", gui);
           this.fw2gui = gui;
@@ -55,17 +59,17 @@ sap.ui.define([
            let dialog = this.byId("filterDialog");
 
            // Simple RadioButtonGroup
-           var oRBGroupRBG1 = new sap.m.RadioButtonGroup("RBG1");
+           var oRBGroupRBG1 = new sap.m.RadioButtonGroup(this.createId("RBG1"));
            oRBGroupRBG1.setTooltip("Group 1");
            oRBGroupRBG1.setColumns(2);
-           oRBGroupRBG1.attachSelect(this.handleModeSelect);
+           oRBGroupRBG1.attachSelect(this.handleModeSelect, this);
 
-           var oButton = new sap.m.RadioButton("RB1-1");
+           var oButton = new sap.m.RadioButton(this.createId("RB1-1"));
            oButton.setText("AND");
            oButton.setTooltip("Tooltip 1");
            oRBGroupRBG1.addButton(oButton);
 
-           oButton = new sap.m.RadioButton("RB1-2");
+           oButton = new sap.m.RadioButton(this.createId("RB1-2"));
            oButton.setText("OR");
            oButton.setTooltip("Tooltip 2");
            oRBGroupRBG1.addButton(oButton);
@@ -85,8 +89,8 @@ sap.ui.define([
              });
            this.byId("filterDialog").setSubHeader(bar);
 
-           let beginButton = new sap.m.Button('simpleDialogAcceptButton', { text: "Apply", press: function () { this.publishFilters(); } });
-           let endButton = new sap.m.Button('simpleDialogCancelButton', { text: "Cancel", press: function () { this.filterDialog.close(); } });
+           let beginButton = new sap.m.Button(this.createId('simpleDialogAcceptButton'), { text: "Apply", press: this.publishFilters.bind(this) });
+           let endButton = new sap.m.Button(this.createId('simpleDialogCancelButton'), { text: "Cancel", press: function () { dialog.close(); } });
            dialog.setEndButton(endButton);
            dialog.setBeginButton(beginButton);
        },
@@ -284,6 +288,7 @@ sap.ui.define([
            let cmd = "FilterPublished(\"" + xxx + "\")";
 
            this.mgr.SendMIR(cmd, this.fw2gui.fElementId, "EventManager");
+           this.byId("filterDialog").close();
        },
 
        setFilterEnabled: function(oEvent)
