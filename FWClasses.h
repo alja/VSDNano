@@ -1,3 +1,6 @@
+#ifndef FWCLASSES_VSD
+#define FWCLASSES_VSD
+
 #include "VsdBase.h"
 #include "VsdProxies.h"
 #include "VsdProvider.h"
@@ -734,3 +737,4 @@ void createScenesAndViews()
 }
 ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
+#endif
