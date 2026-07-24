@@ -48,6 +48,24 @@ for branch in [
 ]:
     nano_tree.SetBranchStatus(branch, 1)
 
+# --- Reproduce the same event selection used by UserVsd-NanoAOD.py, so that
+# VSD entry i still lines up with the correct NanoAOD entry. ---
+n_nano_entries = nano_tree.GetEntries()
+selected_entries = []
+for idx in range(n_nano_entries):
+    nano_tree.GetEntry(idx)
+    if any(nano_tree.bjpsiks_kin_valid[i] for i in range(nano_tree.nbjpsiks)):
+        selected_entries.append(idx)
+        if len(selected_entries) == n_vsd:
+            break
+
+if len(selected_entries) != n_vsd:
+    print(f"ERROR: found {len(selected_entries)} matching NanoAOD events but "
+          f"VSD tree has {n_vsd} entries — re-run UserVsd-NanoAOD.py.")
+    vsd_file.Close()
+    nano_file.Close()
+    sys.exit(1)
+
 # --- Add new branches to existing VSD tree ---
 
 b_vtx_vec = ROOT.std.vector("VsdVertex")()
@@ -82,11 +100,11 @@ def progress_bar(i, total, t0, width=40):
     sys.stdout.flush()
 
 t0 = time.time()
-for idx in range(n_vsd):
+for i, idx in enumerate(selected_entries):
     nano_tree.GetEntry(idx)
 
-    if idx % 500 == 0:
-        progress_bar(idx, n_vsd, t0)
+    if i % 500 == 0:
+        progress_bar(i, n_vsd, t0)
 
     b_vtx_vec.clear()
     jpsi_vtx_vec.clear()
