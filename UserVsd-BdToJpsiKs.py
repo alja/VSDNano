@@ -31,7 +31,10 @@ for branch in [
     "nbjpsiks",
     "bjpsiks_kin_valid",
     "bjpsiks_kin_vtx_x", "bjpsiks_kin_vtx_y", "bjpsiks_kin_vtx_z",
-    "bjpsiks_mm_index", "bjpsiks_ks_index",
+    "bjpsiks_mm_index",
+    "bjpsiks_ks_decay_length",
+    "bjpsiks_pion1_pt", "bjpsiks_pion1_eta", "bjpsiks_pion1_phi",
+    "bjpsiks_pion2_pt", "bjpsiks_pion2_eta", "bjpsiks_pion2_phi",
     # J/psi (dimuon)
     "nmm",
     "mm_kin_vtx_x", "mm_kin_vtx_y", "mm_kin_vtx_z",
@@ -40,13 +43,26 @@ for branch in [
     "mm_mu1_index", "mm_mu2_index",
     # muon charge from standard Muon collection
     "nMuon", "Muon_charge",
-    # K_S
-    "nks",
-    "ks_kin_lxy", "ks_kin_phi", "ks_kin_eta",
-    "ks_trk1_pt", "ks_trk1_eta", "ks_trk1_phi",
-    "ks_trk2_pt", "ks_trk2_eta", "ks_trk2_phi",
 ]:
     nano_tree.SetBranchStatus(branch, 1)
+
+# --- Reproduce the same event selection used by UserVsd-NanoAOD.py, so that
+# VSD entry i still lines up with the correct NanoAOD entry. ---
+n_nano_entries = nano_tree.GetEntries()
+selected_entries = []
+for idx in range(n_nano_entries):
+    nano_tree.GetEntry(idx)
+    if any(nano_tree.bjpsiks_kin_valid[i] for i in range(nano_tree.nbjpsiks)):
+        selected_entries.append(idx)
+        if len(selected_entries) == n_vsd:
+            break
+
+if len(selected_entries) != n_vsd:
+    print(f"ERROR: found {len(selected_entries)} matching NanoAOD events but "
+          f"VSD tree has {n_vsd} entries — re-run UserVsd-NanoAOD.py.")
+    vsd_file.Close()
+    nano_file.Close()
+    sys.exit(1)
 
 # --- Add new branches to existing VSD tree ---
 
@@ -82,11 +98,11 @@ def progress_bar(i, total, t0, width=40):
     sys.stdout.flush()
 
 t0 = time.time()
-for idx in range(n_vsd):
+for i, idx in enumerate(selected_entries):
     nano_tree.GetEntry(idx)
 
-    if idx % 500 == 0:
-        progress_bar(idx, n_vsd, t0)
+    if i % 500 == 0:
+        progress_bar(i, n_vsd, t0)
 
     b_vtx_vec.clear()
     jpsi_vtx_vec.clear()
@@ -132,38 +148,38 @@ for idx in range(n_vsd):
         mu2.setPos(jvx, jvy, jvz)
         muon_vec.push_back(mu2)
 
-        # K_S vertex: B vertex + lxy * unit direction vector
-        # (K_S has no stored vtx x/y/z; reconstruct from flight length)
-        ks_idx = nano_tree.bjpsiks_ks_index[i]
-        if ks_idx < 0 or ks_idx >= nano_tree.nks:
-            continue
-        ks_lxy = nano_tree.ks_kin_lxy[ks_idx]
-        ks_phi = nano_tree.ks_kin_phi[ks_idx]
-        ks_eta = nano_tree.ks_kin_eta[ks_idx]
+        # K_S vertex: B vertex + decay_length * unit direction vector.
+        # Direction is taken from the vector sum of the two pion momenta
+        # (as fit directly for this B candidate), not from the separate,
+        # much less complete standalone K_S (V0) collection.
+        pi1_pt, pi1_eta, pi1_phi = (
+            nano_tree.bjpsiks_pion1_pt[i],
+            nano_tree.bjpsiks_pion1_eta[i],
+            nano_tree.bjpsiks_pion1_phi[i],
+        )
+        pi2_pt, pi2_eta, pi2_phi = (
+            nano_tree.bjpsiks_pion2_pt[i],
+            nano_tree.bjpsiks_pion2_eta[i],
+            nano_tree.bjpsiks_pion2_phi[i],
+        )
 
-        ksvx = bvx + ks_lxy * math.cos(ks_phi)
-        ksvy = bvy + ks_lxy * math.sin(ks_phi)
+        px = pi1_pt * math.cos(pi1_phi) + pi2_pt * math.cos(pi2_phi)
+        py = pi1_pt * math.sin(pi1_phi) + pi2_pt * math.sin(pi2_phi)
+        pz = pi1_pt * math.sinh(pi1_eta) + pi2_pt * math.sinh(pi2_eta)
+        p = math.sqrt(px * px + py * py + pz * pz)
 
-        # double check
-        ksvz = bvz + ks_lxy * math.sinh(ks_eta)
+        ks_decay_length = nano_tree.bjpsiks_ks_decay_length[i]
+        ksvx = bvx + ks_decay_length * px / p
+        ksvy = bvy + ks_decay_length * py / p
+        ksvz = bvz + ks_decay_length * pz / p
         ks_vtx_vec.push_back(ROOT.VsdVertex(ksvx, ksvy, ksvz))
 
         # Pion tracks originating at K_S vertex (K_S -> pi+ pi-)
-        pi1 = ROOT.VsdCandidate(
-            nano_tree.ks_trk1_pt[ks_idx],
-            nano_tree.ks_trk1_eta[ks_idx],
-            nano_tree.ks_trk1_phi[ks_idx],
-            +1,
-        )
+        pi1 = ROOT.VsdCandidate(pi1_pt, pi1_eta, pi1_phi, +1)
         pi1.setPos(ksvx, ksvy, ksvz)
         pion_vec.push_back(pi1)
 
-        pi2 = ROOT.VsdCandidate(
-            nano_tree.ks_trk2_pt[ks_idx],
-            nano_tree.ks_trk2_eta[ks_idx],
-            nano_tree.ks_trk2_phi[ks_idx],
-            -1,
-        )
+        pi2 = ROOT.VsdCandidate(pi2_pt, pi2_eta, pi2_phi, -1)
         pi2.setPos(ksvx, ksvy, ksvz)
         pion_vec.push_back(pi2)
 

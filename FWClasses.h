@@ -709,6 +709,10 @@ void createScenesAndViews()
        mngRhoZ->SetImportEmpty(true);
        auto rhoZView = eveMng->SpawnNewViewer("RhoZ View");
        rhoZView->SetCameraType(REveViewer::kCameraOrthoXOY);
+       // it is working but in the wrong direction
+       std::vector<double> v = {1,0,0,0,0,1,0,0,0,0,1,0,1803.8861589595506,0,0,1,3.098029906503475};
+       rhoZView->GetCamera()->SetCamTransMtx(v);
+       rhoZView->GetCamera()->SetOrthoZoom(3.098);
        rhoZView->AddScene(rhoZEventScene);
 
        auto pgeoScene = eveMng->SpawnNewScene("Projection Geometry RhoZ");

@@ -11,6 +11,24 @@ nano_tree = nano_file.Get("Events")
 n_entries = nano_tree.GetEntries()
 print(f"NanoAOD entries: {n_entries}")
 
+N_TARGET = 100
+
+# --- Select events that contain at least one valid B->J/psi Ks vertex ---
+nano_tree.SetBranchStatus("*", 0)
+nano_tree.SetBranchStatus("nbjpsiks", 1)
+nano_tree.SetBranchStatus("bjpsiks_kin_valid", 1)
+
+selected_entries = []
+for idx in range(n_entries):
+    nano_tree.GetEntry(idx)
+    if any(nano_tree.bjpsiks_kin_valid[i] for i in range(nano_tree.nbjpsiks)):
+        selected_entries.append(idx)
+        if len(selected_entries) == N_TARGET:
+            break
+
+print(f"Selected {len(selected_entries)} events with a B/J/psi/Ks vertex "
+      f"(scanned {idx + 1}/{n_entries} entries)")
+
 # Disable all branches, then enable only the ones we need.
 
 nano_tree.SetBranchStatus("*", 0)
@@ -18,6 +36,7 @@ for branch in [
     "nMuon", "Muon_pt", "Muon_eta", "Muon_phi",
     "Muon_charge", "Muon_dxy", "Muon_dz", "Muon_isGlobal",
     "nJet", "Jet_pt", "Jet_eta", "Jet_phi", "Jet_chHEF", "Jet_neHEF",
+    "PV_x", "PV_y", "PV_z",
     "run", "luminosityBlock", "event",
 ]:
     nano_tree.SetBranchStatus(branch, 1)
@@ -54,12 +73,12 @@ def progress_bar(i, total, t0, width=40):
     sys.stdout.flush()
 
 t0 = time.time()
-# for idx in range(n_entries):
-for idx in range(20):
+n_selected = len(selected_entries)
+for sel_i, idx in enumerate(selected_entries):
     nano_tree.GetEntry(idx)
 
-    if idx % 500 == 0:
-        progress_bar(idx, n_entries, t0)
+    if sel_i % 500 == 0:
+        progress_bar(sel_i, n_selected, t0)
 
     muon_vec.clear()
     jet_vec.clear()
@@ -75,8 +94,12 @@ for idx in range(20):
         is_global = bool(nano_tree.Muon_isGlobal[i])
 
         muon = ROOT.VsdMuon(pt, eta, phi, charge, is_global)
-        # PCA to beam axis, assuming PV at (0,0,0)
-        muon.setPos(-dxy * math.sin(phi), dxy * math.cos(phi), dz)
+        # PCA relative to the true primary vertex (dxy/dz are defined w.r.t. PV)
+        muon.setPos(
+            nano_tree.PV_x - dxy * math.sin(phi),
+            nano_tree.PV_y + dxy * math.cos(phi),
+            nano_tree.PV_z + dz,
+        )
         muon_vec.push_back(muon)
 
     for i in range(nano_tree.nJet):
@@ -94,7 +117,7 @@ for idx in range(20):
 
     vsd_tree.Fill()
 
-progress_bar(n_entries - 1, n_entries, t0)
+progress_bar(n_selected - 1, n_selected, t0)
 print(f"\nDone in {time.time()-t0:.1f}s. Written to UserVsd-NanoAOD.root")
 
 vsd_tree.Write()
