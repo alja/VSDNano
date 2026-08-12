@@ -154,6 +154,8 @@ void write_geo_extract_full()
    // Build subsystems
    auto tracker = buildGroup("tracker", trackerPaths, kRed);
    auto muon    = buildGroup("muon",    muonPaths,    kBlue);
+   muon->FindChild("MGNT_1")->SetMainColor(kGray);
+   muon->FindChild("MGNT_1")->SetMainTransparency(85);
    auto ecal    = buildGroup("ecal",    ecalPaths,    kGreen+2);
    auto hcal    = buildGroup("hcal",    hcalPaths,    kOrange+7);
 
