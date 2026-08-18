@@ -2,9 +2,11 @@
 #define VsdProvider_h
 #include "VsdBase.h"
 #include "TClass.h"
+#include "TFile.h"
 #include "TVirtualCollectionProxy.h"
 #include "TBranchElement.h"
 #include "TPRegexp.h"
+#include <iostream>
 #include "nlohmann/json.hpp"
 
 

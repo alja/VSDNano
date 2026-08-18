@@ -1,8 +1,12 @@
+#ifndef VSDPorxies_h
+#define VSDPorxies_h
+
 #include "VsdBase.h"
 #include "lego_bins.h"
 #include "FWDataCollection.h"
 
 #include "TROOT.h"
+#include "TFile.h"
 #include "TH2.h"
 #include "TFile.h"
 #include "ROOT/REveDataCollection.hxx"
@@ -845,3 +849,4 @@ public:
 }; // CaloTowerProxyBuilder
 //.....................................................
 //==============================================================================
+#endif

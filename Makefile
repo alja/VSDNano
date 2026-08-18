@@ -1,39 +1,85 @@
-ROOT_CFLAGS := `root-config --cflags`
-ROOT_LDFLAGS := -L`root-config --libdir`
+CPPFLAGS := -I$(shell root-config --incdir)
+CXXFLAGS := -O0 -g -fPIC $(shell root-config --auxcflags)
 
-all: evd
+ROOT_LIBS := $(shell root-config --libs)
 
-clean:
-	rm -f VsdDict.cc VsdDict_rdict.pcm libVsdDict.so
-	rm -f FWDict.cc FWDict_rdict.pcm libFWDict.so
-	rm -f service
+#===============================================================================
+#=================== DEFAULT ===================================================
+#===============================================================================
 
-### Vsd Tree and dicts
+all: evd_run
 
-VsdDict.cc VsdDict_rdict.pcm &: VsdBase.h Vsd_Linkdef.h
-	rootcling -I. -f VsdDict.cc VsdBase.h Vsd_Linkdef.h
+#===============================================================================
+#=================== VSD DICTIONARY =============================================
+#===============================================================================
 
-libVsdDict.so: VsdDict.cc
-	c++ -shared -fPIC -o libVsdDict.so ${ROOT_CFLAGS} VsdDict.cc
+VsdDict.cc: VsdBase.h Vsd_Linkdef.h
+	@rm -f VsdDict.cc VsdDict_rdict.pcm
+	rootcling -f VsdDict.cc VsdBase.h Vsd_Linkdef.h
 
-### Graphical Dict
-
-FWDict.cc FWDict_rdict.pcm &: FWClasses.h FWDataCollection.h FW_Linkdef.h
-	rootcling -I. -f FWDict.cc FWClasses.h FWDataCollection.h FW_Linkdef.h
-
-libFWDict.so: FWDict.cc
-	c++ -shared -fPIC -o libFWDict.so ${ROOT_CFLAGS} FWDict.cc
+VsdDict.o: VsdDict.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $<
 
 
-### Sample
+FWEventManager.o: FWEventManager.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $<
+
+libVsdDict.so: VsdDict.o FWEventManager.o
+	$(CXX) -shared -o $@ \
+	    VsdDict.o FWEventManager.o \
+	    $(ROOT_LIBS)
+
+#===============================================================================
+#=================== GRAPHICAL DICTIONARY ======================================
+#===============================================================================
+
+FWDict.cc: FWEventManager.h FWDataCollection.h FW_Linkdef.h
+	@rm -f FWDict.cc FWDict_rdict.pcm
+	rootcling -I. -f FWDict.cc \
+	    FWEventManager.h \
+	    FWDataCollection.h \
+	    FW_Linkdef.h
+
+FWDict.o: FWDict.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fPIC -c $<
+
+libFWDict.so: FWDict.o
+	$(CXX) -shared -o $@ \
+	    FWDict.o \
+	    $(ROOT_LIBS)
+
+#===============================================================================
+#=================== SAMPLE ====================================================
+#===============================================================================
 
 UserVsd.root: UserVsd.py
 	python UserVsd.py
 
+#===============================================================================
+#=================== EXECUTABLE ================================================
+#===============================================================================
 
-## run event display
-evd: UserVsd.root libVsdDict.so libFWDict.so
-	root.exe 'evd.h("UserVsd.root")'
+evd_run: evd_run.cc libVsdDict.so libFWDict.so
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ \
+	    evd_run.cc FWCollectionManager.h \
+	    -L. -Wl,-rpath,'$$ORIGIN' \
+	    -Wl,--no-as-needed \
+	    -lVsdDict \
+	    -lFWDict \
+	    -Wl,--as-needed \
+	    -lEG \
+	    -lGeom \
+	    -lROOTWebDisplay \
+	    -lROOTEve \
+	    $(ROOT_LIBS)
 
-service: service.cc evd.h libVsdDict.so libFWDict.so
-	c++ ${ROOT_CFLAGS} `root-config --libs`  -lROOTEve -lROOTWebDisplay -lGeom -o $@ service.cc lego_bins.h
+#===============================================================================
+#=================== CLEAN =====================================================
+#===============================================================================
+
+clean:
+	rm -f VsdDict.cc VsdDict.o VsdDict_rdict.pcm
+	rm -f FWDict.cc FWDict.o FWDict_rdict.pcm
+	rm -f libVsdDict.so libFWDict.so FWEventManager.o
+	rm -f evd_run
+	rm -f FW*_dictContent.h
