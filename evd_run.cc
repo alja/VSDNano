@@ -72,8 +72,8 @@ public:
 
 void doFishEyeDistortion(REveProjectionManager* projMgr)
 {
-    float caloDistortion = 1.0;
-    float muonDistortion = 0.5;
+    float caloDistortion = 0.05;
+    float muonDistortion = 0.025;
     if (projMgr->GetProjection()->GetType() == REveProjection::kPT_RPhi)
     {
         projMgr->GetProjection()->ChangePreScaleEntry(0, 1, caloDistortion);
@@ -90,7 +90,7 @@ void doFishEyeDistortion(REveProjectionManager* projMgr)
 
     // static const float s_distortF = 0.001;
       REveProjection* p = projMgr->GetProjection();
-    p->SetDistortion(0.02);
+    p->SetDistortion(0.005);
     p->SetFixR(310);
 
     // force an update
@@ -233,7 +233,7 @@ void createScenesAndViews()
        mngRPhi->SetCurrentDepth(-1);
        mngRPhi->ImportElements(calo3d, rPhiEventScene);
        mngRPhi->SetCurrentDepth(0);
-      // doFishEyeDistortion(mngRPhi);
+       doFishEyeDistortion(mngRPhi);
    }
    // Projected RhoZ
    if (1)
@@ -306,8 +306,8 @@ void evd_run(VsdProvider *prov)
    collectionMng->m_mngRhoZ = mngRhoZ;
 
    auto eventMng = new EventManager(collectionMng, prov);
-
-   gSystem->Load("./libFWDict.so");
+TClass::GetClass("EventManager", true);
+  // gSystem->Load("./libFWDict.so");
    /*
 std::cout << "REveElement class = "
           << TClass::GetClass("ROOT::Experimental::REveElement", false)
