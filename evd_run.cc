@@ -282,8 +282,6 @@ void createScenesAndViews()
     //((REveViewer*)(gEve->GetViewers()->FirstChild()))->SetMandatory(false);
 }
 
-
-
 void evd_run(VsdProvider *prov)
 {
    auto eveMng = REveManager::Create();
@@ -297,9 +295,9 @@ void evd_run(VsdProvider *prov)
    gEve->AddLocation("unidir/", locPath);
    gEve->SetDefaultHtmlPage("file:unidir/eventDisplay.html");
 
-   printElements(gEve->GetWorld(), true);
+   //printElements(gEve->GetWorld(), true);
    createScenesAndViews();
-   printElements(gEve->GetWorld(), true);
+   //printElements(gEve->GetWorld(), true);
 
    auto collectionMng = new CollectionManager(prov);
    collectionMng->m_caloData = caloData;
@@ -309,24 +307,50 @@ void evd_run(VsdProvider *prov)
 
    auto eventMng = new EventManager(collectionMng, prov);
 
-auto c = TClass::GetClass("EventManager");
+   gSystem->Load("./libFWDict.so");
+   /*
+std::cout << "REveElement class = "
+          << TClass::GetClass("ROOT::Experimental::REveElement", false)
+          << std::endl;
 
-std::cout << c->GetName() << std::endl;
-std::cout << c->GetBaseClass("ROOT::Experimental::REveElement") << std::endl;
+std::cout << "EventManager class = "
+          << TClass::GetClass("EventManager", false)
+          << std::endl;
 
+auto c1 = TClass::GetClass("EventManager", false);
+std::cout << "before true: " << c1 << "\n";
+
+auto c2 = TClass::GetClass("EventManager", true);
+std::cout << "after true:  " << c2 << "\n";
+
+auto c3 = TClass::GetClass("EventManager", false);
+std::cout << "after true/false: " << c3 << "\n";*/
+
+/*
+   auto c = TClass::GetClass("EventManager", false);
+   if (c)
+   {
+
+      std::cout << c->GetName() << std::endl;
+      std::cout << c->GetBaseClass("ROOT::Experimental::REveElement") << std::endl;
+      c->IsA();
+   }
+   else
+   {
+      printf("MISSING DICT \n");
+   }
+*/
    gEve->GetWorld()->AddElement(eventMng);
-   c->IsA();
 
-   
    eventMng->UpdateTitle();
    eventMng->SetName(prov->m_title.c_str());
 
- auto massDialog = new InvMassDialog();
-  eventMng->AddElement(massDialog);
+   auto massDialog = new InvMassDialog();
+   eventMng->AddElement(massDialog);
 
-  auto deviator = std::make_shared<FWSelectionDeviator>();
-  gEve->GetSelection()->SetDeviator(deviator);
-  gEve->GetHighlight()->SetDeviator(deviator);
+   auto deviator = std::make_shared<FWSelectionDeviator>();
+   gEve->GetSelection()->SetDeviator(deviator);
+   gEve->GetHighlight()->SetDeviator(deviator);
 
    for (auto &vsdc : prov->m_collections)
    {

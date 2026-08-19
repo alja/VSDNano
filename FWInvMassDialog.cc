@@ -102,11 +102,20 @@ class InvMassDialog : public REveElement
    }
    int WriteCoreJson(nlohmann::json &j, int rnr_offset) override
    {
-     int ret = REveElement::WriteCoreJson(j, rnr_offset);
-   
-      std::cout << j.dump(4);
-      j["UT_PostStream"] = "UT_refresh_invmass_dialog";
-      return ret;
+       int ret = REveElement::WriteCoreJson(j, rnr_offset);
+
+       std::cout << j.dump(4);
+       j["UT_PostStream"] = "UT_refresh_invmass_dialog";
+       return ret;
+   }
+   float EtaToTheta(float eta)
+   {
+       using namespace TMath;
+
+       if (eta < 0)
+           return Pi() - 2 * ATan(Exp(-Abs(eta)));
+       else
+           return 2 * ATan(Exp(-Abs(eta)));
    }
 };
 

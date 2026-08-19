@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include "FWEventManager.h"
 #include "VsdProvider.h"
 #include "FWCollectionManager.h"
@@ -6,8 +6,8 @@
 #include <ROOT/REveManager.hxx>
 #include "TFile.h"
 
+using namespace ROOT::Experimental;
 
-#include <iostream>
 void EventManager::autoplay(bool x)
 {
     std::cout << "Set autoplay " << x << std::endl;
@@ -75,7 +75,7 @@ void EventManager::autoplay_scheduler()
         }
         if (autoplay)
         {
-            REveManager::ChangeGuard ch;
+            ROOT::Experimental::REveManager::ChangeGuard ch;
             NextEvent();
         }
         else
@@ -85,7 +85,7 @@ void EventManager::autoplay_scheduler()
     }
 }
 
- void EventManager::PreviousEvent()
+void EventManager::PreviousEvent()
 {
     int id;
     if (m_event->m_eventIdx == 0)
@@ -101,12 +101,12 @@ void EventManager::autoplay_scheduler()
     GotoEvent(id);
 }
 
- void EventManager::GotoEvent(int id)
+void EventManager::GotoEvent(int id)
 {
     m_event->GotoEvent(id);
     UpdateTitle();
     m_collectionMng->RenewEvent();
-    //caloData->DataChanged();
+    // caloData->DataChanged();
 }
 
 void EventManager::UpdateTitle()
@@ -117,7 +117,7 @@ void EventManager::UpdateTitle()
     StampObjProps();
 }
 
- void EventManager::NextEvent()
+void EventManager::NextEvent()
 {
     int id = m_event->m_eventIdx + 1;
     if (id == m_event->GetNumEvents())
@@ -128,4 +128,4 @@ void EventManager::UpdateTitle()
     GotoEvent(id);
 }
 
-void EventManager::FilterPublished(const char* data) {}
+void EventManager::FilterPublished(const char *data) {}

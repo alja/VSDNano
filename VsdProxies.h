@@ -1,5 +1,5 @@
-#ifndef VSDPorxies_h
-#define VSDPorxies_h
+#ifndef VSDProxies_h
+#define VSDProxies_h
 
 #include "VsdBase.h"
 #include "lego_bins.h"
@@ -42,149 +42,36 @@
 #include "TMatrixDEigen.h"
 #include "TMatrixDSym.h"
 
-using namespace ROOT::Experimental;
+//====================================================================================
 
 //====================================================================================
 
-REveGeoShape *getShape(const char *name,
-                       TGeoBBox *shape,
-                       Color_t color)
+class HitProxyBuilder : public ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdHit>
 {
-   REveGeoShape *egs = new REveGeoShape(name);
-   TColor *c = gROOT->GetColor(color);
-   Float_t rgba[4] = {1, 0, 0, 1};
-   if (c)
-   {
-      rgba[0] = c->GetRed();
-      rgba[1] = c->GetGreen();
-      rgba[2] = c->GetBlue();
-   }
-   egs->SetMainColorRGB(rgba[0], rgba[1], rgba[2]);
-   egs->SetShape(shape);
-   return egs;
-}
-
-float EtaToTheta(float eta)
-{
-   using namespace TMath;
-
-   if (eta < 0)
-      return Pi() - 2 * ATan(Exp(-Abs(eta)));
-   else
-      return 2 * ATan(Exp(-Abs(eta)));
-}
-
-void addRhoZEnergyProjection(REveDataProxyBuilderBase *pb, REveElement *container,
-                             double r_ecal, double z_ecal,
-                             double theta_min, double theta_max,
-                             double phi)
-{
-   REveGeoManagerHolder gmgr(REveGeoShape::GetGeoManager());
-   double z1 = r_ecal / tan(theta_min);
-   if (z1 > z_ecal)
-      z1 = z_ecal;
-   if (z1 < -z_ecal)
-      z1 = -z_ecal;
-   double z2 = r_ecal / tan(theta_max);
-   if (z2 > z_ecal)
-      z2 = z_ecal;
-   if (z2 < -z_ecal)
-      z2 = -z_ecal;
-   double r1 = z_ecal * fabs(tan(theta_min));
-   if (r1 > r_ecal)
-      r1 = r_ecal;
-   if (phi < 0)
-      r1 = -r1;
-   double r2 = z_ecal * fabs(tan(theta_max));
-   if (r2 > r_ecal)
-      r2 = r_ecal;
-   if (phi < 0)
-      r2 = -r2;
-
-   if (fabs(r2 - r1) > 1)
-   {
-      TGeoBBox *sc_box = new TGeoBBox(0., fabs(r2 - r1) / 2, 1);
-      REveGeoShape *element = new REveGeoShape("r-segment");
-      element->SetShape(sc_box);
-      REveTrans &t = element->RefMainTrans();
-      t(1, 4) = 0;
-      t(2, 4) = (r2 + r1) / 2;
-      t(3, 4) = fabs(z2) > fabs(z1) ? z2 : z1;
-      pb->SetupAddElement(element, container);
-   }
-   if (fabs(z2 - z1) > 1)
-   {
-      TGeoBBox *sc_box = new TGeoBBox(0., 1, (z2 - z1) / 2);
-      REveGeoShape *element = new REveGeoShape("z-segment");
-      element->SetShape(sc_box);
-      REveTrans &t = element->RefMainTrans();
-      t(1, 4) = 0;
-      t(2, 4) = fabs(r2) > fabs(r1) ? r2 : r1;
-      t(3, 4) = (z2 + z1) / 2;
-      pb->SetupAddElement(element, container);
-   }
+public:
+   using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdHit>::BuildItem;
+   virtual void BuildItem(const VsdHit &iData, int iIndex, ROOT::Experimental::REveElement *iItemHolder, const ROOT::Experimental::REveViewContext *vc) override;
+ 
 };
 
 //====================================================================================
 
-class HitProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdHit>
+class SegmentProxyBuilder : public ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdSegment>
 {
 public:
-   using REveDataSimpleProxyBuilderTemplate<VsdHit>::BuildItem;
-   virtual void BuildItem(const VsdHit &iData, int iIndex, REveElement *iItemHolder, const REveViewContext *vc) override
-   {
-      auto ps = new REvePointSet("Hit Point");
-      // Set point at x, y, z defined in VsdHit
-      ps->SetNextPoint(iData.x(), iData.y(), iData.z());
-      
-      // Visual styling
-      ps->SetMarkerStyle(4); 
-      ps->SetMarkerSize(4);
-      ps->SetMainColor(Collection()->GetMainColor());
-      
-      SetupAddElement(ps, iItemHolder);
-   }
+   using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdSegment>::BuildItem;
+   virtual void BuildItem(const VsdSegment &iData, int iIndex, ROOT::Experimental::REveElement *iItemHolder, const ROOT::Experimental::REveViewContext *vc) override;
 };
 
 //====================================================================================
 
-class SegmentProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdSegment>
+class VertexProxyBuilder : public ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdVertex>
 {
 public:
-   using REveDataSimpleProxyBuilderTemplate<VsdSegment>::BuildItem;
-   virtual void BuildItem(const VsdSegment &iData, int iIndex, REveElement *iItemHolder, const REveViewContext *vc) override
+   using ROOT::Experimental::REveDataProxyBuilderBase::SetCollection;
+   void SetCollection(ROOT::Experimental::REveDataCollection * collection) override
    {
-      auto ls = new REveStraightLineSet("Segment Line");
-      
-      // start point (x, y, z)
-      float x0 = iData.posX();
-      float y0 = iData.posY();
-      float z0 = iData.posZ();
-      
-      // end point: we project the slopes tx and ty over a small delta-Z 
-      // Adjust 'length' based on your detector geometry (e.g., 5.0 cm)
-      float length = 5.0f; 
-      float x1 = x0 + iData.tx() * length;
-      float y1 = y0 + iData.ty() * length;
-      float z1 = z0 + length;
-
-      ls->AddLine(x0, y0, z0, x1, y1, z1);
-      ls->SetLineWidth(2);
-      ls->SetMainColor(Collection()->GetMainColor());
-      
-      SetupAddElement(ls, iItemHolder);
-   }
-};
-
-//====================================================================================
-
-class VertexProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdVertex>
-{
-public:
-   using REveDataProxyBuilderBase::SetCollection;
-   void SetCollection(REveDataCollection * collection) override
-   {
-      REveDataProxyBuilderBase::SetCollection(collection);
+      ROOT::Experimental::REveDataProxyBuilderBase::SetCollection(collection);
       auto fwc = dynamic_cast<FWDataCollection *>(collection);
       /*
       fwc->m_config.push_back({{"val", true}, {"type", "Bool"}, {"name", "DrawEllipse"}});
@@ -197,258 +84,36 @@ public:
       fwc->assertParamter({{"val", 5}, {"type", "Long"}, {"name", "MarkerSize"}});
    }
 
-   using REveDataSimpleProxyBuilderTemplate<VsdVertex>::BuildItem;
-   virtual void BuildItem(const VsdVertex &iData, int iIndex, REveElement *iItemHolder, const REveViewContext *vc) override
-   {
-      auto item = dynamic_cast<FWDataCollection *>(Collection());
-      long markerSize = item->getLongParameter("MarkerSize");
-      bool drawEllipse = item->getBoolParameter("DrawEllipse");
-
-      // vertex position
-      //
-      auto ps = new REvePointSet("vertex pnt");
-      ps->SetMainColor(kGreen + 10);
-      ps->SetNextPoint(iData.x(), iData.y(), iData.z());
-      ps->SetMarkerStyle(4);
-      ps->SetMarkerSize(markerSize);
-      SetupAddElement(ps, iItemHolder );
-
-      if (drawEllipse)
-      {
-         TMatrixDSym symMtx(3);
-         for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-            {
-               // printf("Read error [%d,%d] %g\n", i, j, iData.m_error[i][j]);
-               symMtx(i, j) = iData.m_error[i][j];
-            }
-         // symMtx.Print();
-
-         TMatrixDEigen mtx(symMtx);
-
-         TVectorD eigValsVec(mtx.GetEigenValues());
-         if (eigValsVec.Min() <= 0)
-         {
-            if (eigValsVec.Min() < 0)
-               R__LOG_TO_CHANNEL(ROOT::ELogLevel::kError, ROOT::Experimental::REveLog()) << "Negative error matrix " << item->GetName() << " idx = " << iIndex << "\n";
-            printf("Non-positive eigenvalue for collection %s idx %d, skipping error ellipsoid\n", item->GetCName(), iIndex);
-         }
-         else
-         {
-            eigValsVec = eigValsVec.Sqrt();
-
-            TMatrixD vecEig = mtx.GetEigenVectors();
-            // vecEig.Print();
-
-            long scale = item->getLongParameter("ScaleEllipse");
-            REveVector v[3];
-            for (int i = 0; i < 3; ++i)
-            {
-               v[i].Set(vecEig(0, i), vecEig(1, i), vecEig(2, i));
-               v[i] *= eigValsVec(i) * scale;
-               // v[i].Dump();
-            }
-            REveEllipsoid *ell = new REveEllipsoid("VertexError");
-            ell->RefMainTrans().SetPos(iData.x(), iData.y(), iData.z());
-            ell->SetLineWidth(2);
-            ell->SetBaseVectors(v[0], v[1], v[2]);
-            ell->Outline();
-            ell->SetMainTransparency(90);
-            SetupAddElement(ell, iItemHolder);
-
-            // add TGeoSphere
-            if (item->getBoolParameter("DrawEllipseSphere"))
-            {
-               auto sph = new REveGeoShape("Sphere");
-               sph->SetShape(new TGeoSphere(0.98f, 1.0f));
-               sph->SetMainTransparency(95);
-               sph->SetMainColor(iItemHolder->GetMainColor());
-               sph->SetNSegments(80);
-
-               float m0 = v[0].Mag();
-               v[0].Normalize();
-               float m1 = v[1].Mag();
-               v[1].Normalize();
-               float m2 = v[2].Mag();
-               v[2].Normalize();
-
-               sph->InitMainTrans();
-               sph->RefMainTrans().SetBaseVec(1, v[0].fX, v[0].fY, v[0].fZ);
-               sph->RefMainTrans().SetBaseVec(2, v[1].fX, v[1].fY, v[1].fZ);
-               sph->RefMainTrans().SetBaseVec(3, v[2].fX, v[2].fY, v[2].fZ);
-               sph->RefMainTrans().SetScale(m0, m1, m2);
-               sph->RefMainTrans().SetPos(iData.x(), iData.y(), iData.z());
-               // last parameter is false to keep the transparency
-               SetupAddElement(sph, iItemHolder, false);
-            }
-
-         }
-      }
-
-/*
-      // tracks
-      if (item->getConfig()->value<bool>("Draw Tracks"))
-      {
-         for(reco::Vertex::trackRef_iterator it = iData.tracks_begin() ;
-             it != iData.tracks_end()  ; ++it)
-         {
-            float w = iData.trackWeight(*it);
-            if (w < 0.5) continue;
-      
-            const reco::Track & track = *it->get();
-            REveRecTrack t;
-            t.fBeta = 1.;
-            t.fV = REveVector(track.vx(), track.vy(), track.vz());
-            t.fP = REveVector(track.px(), track.py(), track.pz());
-            t.fSign = track.charge();
-            REveTrack* trk = new REveTrack(&t, context->getTrackPropagator());
-            trk->MakeTrack(); 
-            SetupAddElement(trk, iItemHolder);
-         }
-      }
-      if (item->getConfig()->value<bool>("Draw Pseudo Track")) {
-         REveRecTrack t;
-         t.fBeta = 1.;
-         t.fV = REveVector(iData.x(), iData.y(), iData.z());
-         t.fP = REveVector(-iData.p4().px(), -iData.p4().py(), -iData.p4().pz());
-         t.fSign = 1;
-         REveTrack* trk = new REveTrack(&t, context->getTrackPropagator());
-         trk->SetLineStyle(7);
-         trk->MakeTrack();
-         SetupAddElement(trk, iItemHolder);
-      }
-   */
-   }
+   using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdVertex>::BuildItem;
+   virtual void BuildItem(const VsdVertex &iData, int iIndex, ROOT::Experimental::REveElement *iItemHolder, const ROOT::Experimental::REveViewContext *vc) override;
 };
 
 //====================================================================================
 
-class METProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdMET>
+class METProxyBuilder : public ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdMET>
 {
 public:
    virtual bool HaveSingleProduct() const override { return false; }
 
-   using REveDataSimpleProxyBuilderTemplate<VsdMET>::BuildItemViewType;
+   using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdMET>::BuildItemViewType;
    virtual void BuildItemViewType(const VsdMET &met, int /*idx*/, ROOT::Experimental::REveElement *iItemHolder,
-                                  const std::string &viewType, const REveViewContext *context) override
-   {
-      using namespace TMath;
-      double phi = met.phi();
-      double theta = EtaToTheta(met.eta());
-      //double theta = 0.f;
-      double size = 1.f;
-
-      REveScalableStraightLineSet *marker = new REveScalableStraightLineSet("MET marker");
-      marker->SetLineWidth(2);
-      marker->SetAlwaysSecSelect(false);
-
-      SetupAddElement(marker, iItemHolder);
-
-      float offr = 5;
-      float r_ecal = context->GetMaxR() + offr;
-      float z_ecal = context->GetMaxZ() + offr;
-      float energyScale = 5.f;
-
-      if (viewType.compare(0, 3, "Rho") == 0)
-      {
-         // body
-         double r0;
-         if (TMath::Abs(met.eta()) < abs(atan(r_ecal / z_ecal)))
-         {
-            r0 = r_ecal / sin(theta);
-         }
-         else
-         {
-            r0 = z_ecal / fabs(cos(theta));
-         }
-         marker->SetScaleCenter(0., Sign(r0 * sin(theta), phi), r0 * cos(theta));
-         double r1 = r0 + 1;
-         marker->AddLine(0., Sign(r0 * sin(theta), phi), r0 * cos(theta),
-                         0., Sign(r1 * sin(theta), phi), r1 * cos(theta));
-         // arrow pointer
-         double r2 = r1 - 0.1;
-         double dy = 0.05 * size;
-         marker->AddLine(0., Sign(r2 * sin(theta) + dy * cos(theta), phi), r2 * cos(theta) - dy * sin(theta),
-                         0., Sign(r1 * sin(theta), phi), r1 * cos(theta));
-         dy = -dy;
-         marker->AddLine(0., Sign(r2 * sin(theta) + dy * cos(theta), phi), r2 * cos(theta) - dy * sin(theta),
-                         0., Sign(r1 * sin(theta), phi), r1 * cos(theta));
-
-         // segment
-         addRhoZEnergyProjection(this, iItemHolder, r_ecal - 1, z_ecal - 1,
-                                 theta - 0.04, theta + 0.04,
-                                 phi);
-      }
-      else
-      {
-         // body
-         double r0 = r_ecal;
-         double r1 = r0 + 1;
-         marker->SetScaleCenter(r0 * cos(phi), r0 * sin(phi), 0);
-         marker->AddLine(r0 * cos(phi), r0 * sin(phi), 0,
-                         r1 * cos(phi), r1 * sin(phi), 0);
-
-         // arrow pointer, xy  rotate offset point ..
-         double r2 = r1 - 0.1;
-         double dy = 0.05 * size;
-
-         marker->AddLine(r2 * cos(phi) - dy * sin(phi), r2 * sin(phi) + dy * cos(phi), 0,
-                         r1 * cos(phi), r1 * sin(phi), 0);
-         dy = -dy;
-         marker->AddLine(r2 * cos(phi) - dy * sin(phi), r2 * sin(phi) + dy * cos(phi), 0,
-                         r1 * cos(phi), r1 * sin(phi), 0);
-
-         // segment
-         double min_phi = phi - M_PI / 36 / 2;
-         double max_phi = phi + M_PI / 36 / 2;
-         REveGeoManagerHolder gmgr(REveGeoShape::GetGeoManager());
-         REveGeoShape *element = getShape("spread", new TGeoTubeSeg(r0 - 2, r0, 1, min_phi * 180 / M_PI, max_phi * 180 / M_PI), 0);
-         element->SetPickable(kTRUE);
-         element->SetMainTransparency(90);
-         SetupAddElement(element, iItemHolder);
-      }
-      // float value = met.et();
-      float value = met.pt();
-      marker->SetScale(energyScale * value);
-   }
+                                  const std::string &viewType, const ROOT::Experimental::REveViewContext *context) override;
 };
 
 //====================================================================================
 
-class CandidateProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdCandidate>
+class CandidateProxyBuilder : public ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdCandidate>
 {
-   using REveDataSimpleProxyBuilderTemplate<VsdCandidate>::BuildItem;
-   void BuildItem(const VsdCandidate &el, int /*idx*/, REveElement *iItemHolder, const REveViewContext *context) override
-   {
-      VsdCandidate &cand = (VsdCandidate &)(el); // amt need a const
-      // int pdg = 11 * cand.charge();
-
-      float theta = EtaToTheta(cand.eta());
-      float pz = cand.pt() / TMath::Tan(theta);
-      float px = cand.pt() * TMath::Cos(cand.phi());
-      float py = cand.pt() * TMath::Sin(cand.phi());
-
-      REveRecTrack t;
-      t.fBeta = 1.;
-      t.fV = REveVector(cand.posX(), cand.posY(), cand.posZ()); // iData.vx(), iData.vy(), iData.vz());
-      t.fP = REveVector(px, py, pz);
-      t.fSign = cand.m_charge;
-      REveTrack *track = new REveTrack(&t, context->GetPropagator());
-
-      // printf("==============  BUILD track %s (pt=%f, eta=%f) \n", iItemHolder->GetCName(), p.Pt(), p.Eta());
-      // auto track = new REveTrack((TParticle *)(x), 1, context->GetPropagator());
-      track->MakeTrack();
-      SetupAddElement(track, iItemHolder, true);
-      // track->SetName(Form("element %s id=%d", iItemHolder->GetCName(), track->GetElementId()));
-   }
+   using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdCandidate>::BuildItem;
+   void BuildItem(const VsdCandidate &el, int /*idx*/, ROOT::Experimental::REveElement *iItemHolder, const ROOT::Experimental::REveViewContext *context) override;
 };
 
 //====================================================================================
 
-class MuonProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdMuon>
+class MuonProxyBuilder : public ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdMuon>
 {
 private:
-   REveTrackPropagator *muonPropagator_g = nullptr;
+   ROOT::Experimental::REveTrackPropagator *muonPropagator_g = nullptr;
 
 public:
    void initMuonPropagator()
@@ -456,41 +121,21 @@ public:
       if (muonPropagator_g)
          return;
       // AMT this is ugly ... introduce a global contenxt
-      muonPropagator_g = new REveTrackPropagator();
-      muonPropagator_g->SetMagFieldObj(new REveMagFieldDuo(350, -3.5, 2.0));
+      muonPropagator_g = new ROOT::Experimental::REveTrackPropagator();
+      muonPropagator_g->SetMagFieldObj(new ROOT::Experimental::REveMagFieldDuo(350, -3.5, 2.0));
       muonPropagator_g->SetMaxR(850);
       muonPropagator_g->SetMaxZ(1100);
       muonPropagator_g->SetMaxOrbs(6);
       muonPropagator_g->IncRefCount();
    }
 
-   using REveDataSimpleProxyBuilderTemplate<VsdMuon>::BuildItem;
-   void BuildItem(const VsdMuon &muon, int /*idx*/, REveElement *iItemHolder, const REveViewContext *context) override
-   {
-      initMuonPropagator();
-      float theta = EtaToTheta(muon.eta());
-      float pz = muon.pt() / TMath::Tan(theta);
-      float px = muon.pt() * TMath::Cos(muon.phi());
-      float py = muon.pt() * TMath::Sin(muon.phi());
-
-      REveRecTrack t;
-      t.fBeta = 1.;
-      t.fV = REveVector(muon.posX(), muon.posY(), muon.posZ());
-      t.fP = REveVector(px, py, pz);
-      t.fSign = muon.m_charge;
-
-      auto track = new REveTrack(&t, muonPropagator_g);
-      track->MakeTrack();
-      track->SetLineWidth(2);
-
-      SetupAddElement(track, iItemHolder, true);
-      // track->SetName(Form("element %s id=%d", iItemHolder->GetCName(), track->GetElementId()));
-   }
+   using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdMuon>::BuildItem;
+   void BuildItem(const VsdMuon &muon, int /*idx*/, ROOT::Experimental::REveElement *iItemHolder, const ROOT::Experimental::REveViewContext *context) override;
 };
 
 //====================================================================================
 
-class JetProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdJet>
+class JetProxyBuilder : public ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdJet>
 {
    struct Cell
    {
@@ -500,9 +145,9 @@ class JetProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdJet>
       float phiMax;
    };
 
-   void SetCollection(REveDataCollection * collection) override
+   void SetCollection(ROOT::Experimental::REveDataCollection * collection) override
    {
-      REveDataProxyBuilderBase::SetCollection(collection);
+      ROOT::Experimental::REveDataProxyBuilderBase::SetCollection(collection);
       collection->SetLayer(-30);
    }
    bool HaveSingleProduct() const override { return false; }
@@ -636,95 +281,34 @@ class JetProxyBuilder : public REveDataSimpleProxyBuilderTemplate<VsdJet>
 
    } // end makeEndCapCell
 
-   using REveDataSimpleProxyBuilderTemplate<VsdJet>::BuildItemViewType;
-   void BuildItemViewType(const VsdJet &dj, int idx, REveElement *iItemHolder,
-                          const std::string &viewType, const REveViewContext *context) override
-   {
-      auto jet = new REveJetCone();
-      jet->SetCylinder(context->GetMaxR() - 5, context->GetMaxZ());
-      jet->AddEllipticCone(dj.eta(), dj.phi(), dj.coneR(), dj.coneR());
-      SetupAddElement(jet, iItemHolder, true);
-      jet->SetTitle(Form("jet [%d] pt = %f\n", idx, dj.pt()));
-      // printf("make jet %d pt == %f\n", idx, dj.pt());
-      //printf("make xxx jet %d pt == %f\n", idx, xxx->pt());
-      REveVector av(dj.posX(), dj.posY(), dj.posZ());
-      jet->SetApex(av);
+   using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdJet>::BuildItemViewType;
+   void BuildItemViewType(const VsdJet &dj, int idx, ROOT::Experimental::REveElement *iItemHolder,
+                          const std::string &viewType, const ROOT::Experimental::REveViewContext *context) override;
 
-      static const float_t offr = 5;
-      float r_ecal = context->GetMaxR() + offr;
-      float z_ecal = context->GetMaxZ() + offr;
-      float energyScale = 5.f;
-      float transAngle = abs(atan(r_ecal / z_ecal));
-      double theta = EtaToTheta(dj.eta());
-      double phi = dj.phi();
-
-      Cell cell;
-      // hardcoded cell size
-      float ad = 0.02;
-      // thetaMin => etaMax, thetaMax => thetaMin
-      cell.thetaMax = EtaToTheta(dj.eta() - ad);
-      cell.thetaMin = EtaToTheta(dj.eta() + ad);
-      cell.phiMin = phi - ad;
-      cell.phiMax = phi + ad;
-      float pnts[24];
-
-      // an example of slices
-      std::vector<float> sliceVals;
-      sliceVals.push_back(dj.pt() * (1 - dj.hadFraction()));
-      sliceVals.push_back(dj.pt() * dj.hadFraction());
-
-      if (theta < transAngle || (3.14 - theta) < transAngle)
-      {
-         float offset = TMath::Sign(context->GetMaxZ(), dj.eta());
-         for (auto &val : sliceVals)
-         {
-            offset += TMath::Sign(offr, dj.eta());
-            makeEndCapCell(cell, offset, TMath::Sign(val * energyScale, dj.eta()), &pnts[0]);
-            REveBox *reveBox = new REveBox();
-            reveBox->SetVertices(pnts);
-            SetupAddElement(reveBox, iItemHolder, true);
-         }
-      }
-      else
-      {
-         float offset = context->GetMaxR();
-         for (auto &val : sliceVals)
-         {
-            offset += offr;
-            makeBarrelCell(cell, offset, val * energyScale, &pnts[0]);
-            REveBox *reveBox = new REveBox();
-            reveBox->SetVertices(pnts);
-            SetupAddElement(reveBox, iItemHolder, true);
-            reveBox->SetTitle(Form("jet %d", idx)); // amt this is workaround and should be unnecessary
-         }
-      }
-   }
-
-   using REveDataProxyBuilderBase::LocalModelChanges;
-
-   void LocalModelChanges(int idx, REveElement *el, const REveViewContext *ctx) override
+   using ROOT::Experimental::REveDataProxyBuilderBase::LocalModelChanges;
+   void LocalModelChanges(int idx, ROOT::Experimental::REveElement *el, const ROOT::Experimental::REveViewContext *ctx) override
    {
       printf("LocalModelChanges jet %s ( %s )\n", el->GetCName(), el->FirstChild()->GetCName());
-      REveJetCone *cone = dynamic_cast<REveJetCone *>(el->FirstChild());
+      ROOT::Experimental::REveJetCone *cone = dynamic_cast<ROOT::Experimental::REveJetCone *>(el->FirstChild());
       cone->SetLineColor(cone->GetMainColor());
    }
 };
 
 //==============================================================================
-class REveCaloTowerSliceSelector : public REveCaloDataSliceSelector
+class REveCaloTowerSliceSelector : public ROOT::Experimental::REveCaloDataSliceSelector
 {
 private:
-   REveDataCollection* fCollection{nullptr};
-   REveCaloDataHist*   fCaloData{nullptr};
+   ROOT::Experimental::REveDataCollection* fCollection{nullptr};
+   ROOT::Experimental::REveCaloDataHist*   fCaloData{nullptr};
 
 public:
-   REveCaloTowerSliceSelector(int s, REveDataCollection* c, REveCaloDataHist* h):REveCaloDataSliceSelector(s), fCollection(c), fCaloData(h) {}
+   REveCaloTowerSliceSelector(int s, ROOT::Experimental::REveDataCollection* c, ROOT::Experimental::REveCaloDataHist* h):ROOT::Experimental::REveCaloDataSliceSelector(s), fCollection(c), fCaloData(h) {}
 
-   using REveCaloDataSliceSelector::ProcessSelection;
-   void ProcessSelection(REveCaloData::vCellId_t& sel_cells, UInt_t selectionId, Bool_t multi) override
+   using ROOT::Experimental::REveCaloDataSliceSelector::ProcessSelection;
+   void ProcessSelection(ROOT::Experimental::REveCaloData::vCellId_t& sel_cells, UInt_t selectionId, Bool_t multi) override
    {
       std::set<int> item_set;
-      REveCaloData::CellData_t cd;
+      ROOT::Experimental::REveCaloData::CellData_t cd;
       for (auto &cellId : sel_cells)
       {
          fCaloData->GetCellData(cellId, cd);
@@ -741,13 +325,13 @@ public:
                 }
          }
       }
-      REveSelection* sel = (REveSelection*)ROOT::Experimental::gEve->FindElementById(selectionId);
+      ROOT::Experimental::REveSelection* sel = (ROOT::Experimental::REveSelection*)ROOT::Experimental::gEve->FindElementById(selectionId);
       fCollection->GetItemList()->RefSelectedSet() = item_set;
       sel->NewElementPicked(fCollection->GetItemList()->GetElementId(),  multi, true, item_set);
    }
 
-   using REveCaloDataSliceSelector::GetCellsFromSecondaryIndices;
-   void GetCellsFromSecondaryIndices(const std::set<int>& idcs, REveCaloData::vCellId_t& out) override
+   using ROOT::Experimental::REveCaloDataSliceSelector::GetCellsFromSecondaryIndices;
+   void GetCellsFromSecondaryIndices(const std::set<int>& idcs, ROOT::Experimental::REveCaloData::vCellId_t& out) override
    {
       TH2F* hist  =  fCaloData->GetHist(GetSliceIndex());
       std::set<int> cbins;
@@ -768,7 +352,7 @@ public:
             }
          }
          if (!ex) {
-            out.push_back(REveCaloData::CellId_t(bin, GetSliceIndex(), frac));
+            out.push_back(ROOT::Experimental::REveCaloData::CellId_t(bin, GetSliceIndex(), frac));
          }
       }
    }
@@ -776,10 +360,10 @@ public:
 
 //==============================================================================
 
-class CaloTowerProxyBuilder: public REveDataProxyBuilderBase
+class CaloTowerProxyBuilder: public ROOT::Experimental::REveDataProxyBuilderBase
 {
 private:
-   REveCaloDataHist* fCaloData {nullptr};
+   ROOT::Experimental::REveCaloDataHist* fCaloData {nullptr};
    TH2F*             fHist {nullptr};
    int               fSliceIndex {-1};
 
@@ -798,15 +382,15 @@ private:
                    Collection()->GetMainColor(),
                    Collection()->GetMainTransparency());
 
-         fCaloData->GetSelector()->AddSliceSelector(std::unique_ptr<REveCaloDataSliceSelector>
+         fCaloData->GetSelector()->AddSliceSelector(std::unique_ptr<ROOT::Experimental::REveCaloDataSliceSelector>
                                                     (new REveCaloTowerSliceSelector(fSliceIndex, Collection(), fCaloData)));
       }
    }
 public:
-   CaloTowerProxyBuilder(REveCaloDataHist* cd) : fCaloData(cd) {}
+   CaloTowerProxyBuilder(ROOT::Experimental::REveCaloDataHist* cd) : fCaloData(cd) {}
 
-   using REveDataProxyBuilderBase::Build;
-   void BuildProduct(const REveDataCollection* collection, REveElement* product, const REveViewContext*)override
+   using ROOT::Experimental::REveDataProxyBuilderBase::Build;
+   void BuildProduct(const ROOT::Experimental::REveDataCollection* collection, ROOT::Experimental::REveElement* product, const ROOT::Experimental::REveViewContext*)override
    {
       assertSlice();
       fHist->Reset();
@@ -822,7 +406,7 @@ public:
          for (int h = 0; h < collection->GetNItems(); ++h)
          {
             VsdCandidate* tower = (VsdCandidate*)collection->GetDataPtr(h);
-            const REveDataItem* item = Collection()->GetDataItem(h);
+            const ROOT::Experimental::REveDataItem* item = Collection()->GetDataItem(h);
 
             if (!item->GetVisible())
                continue;
@@ -832,16 +416,16 @@ public:
       fCaloData->DataChanged();
    }
 
-   using REveDataProxyBuilderBase::FillImpliedSelected;
-   void FillImpliedSelected(REveElement::Set_t& impSet, const std::set<int>& sec_idcs, Product*) override
+   using ROOT::Experimental::REveDataProxyBuilderBase::FillImpliedSelected;
+   void FillImpliedSelected(ROOT::Experimental::REveElement::Set_t& impSet, const std::set<int>& sec_idcs, Product*) override
    {
       fCaloData->GetSelector()->SetActiveSlice(fSliceIndex);
       impSet.insert(fCaloData);
       fCaloData->FillImpliedSelectedSet(impSet, sec_idcs);
    }
 
-  using REveDataProxyBuilderBase::ModelChanges;
-   void ModelChanges(const REveDataCollection::Ids_t& ids, Product* product) override
+  using ROOT::Experimental::REveDataProxyBuilderBase::ModelChanges;
+   void ModelChanges(const ROOT::Experimental::REveDataCollection::Ids_t& ids, Product* product) override
    {
       BuildProduct(Collection(), nullptr, nullptr);
    }

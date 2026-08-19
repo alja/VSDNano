@@ -11,9 +11,8 @@
 class CollectionManager;
 class VsdProvider;
 
-using namespace ROOT::Experimental;
 
-class EventManager : public REveElement
+class EventManager : public ROOT::Experimental::REveElement
 {
 private:
    CollectionManager    *m_collectionMng{nullptr};

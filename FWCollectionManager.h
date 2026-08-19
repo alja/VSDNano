@@ -14,7 +14,7 @@
 #include "ROOT/REveCalo.hxx"
 
 
-using namespace ROOT::Experimental;
+
 //==============================================================================
 //== Collection Manager =============================================================
 //==============================================================================
@@ -22,25 +22,25 @@ class CollectionManager
 {
 private:
     VsdProvider *m_event{nullptr};
-    REveElement *m_collections{nullptr};
+    ROOT::Experimental::REveElement *m_collections{nullptr};
 
 
 
-    std::vector<REveDataProxyBuilderBase *> m_builders;
+    std::vector<ROOT::Experimental::REveDataProxyBuilderBase *> m_builders;
 
     bool m_isEventLoading{false}; // don't process model changes when applying filter on new event
 public:
-    REveProjectionManager* m_mngRhoZ;
-    REveProjectionManager* m_mngRPhi;
-    REveViewContext* m_viewContext;
-    REveCaloDataHist* m_caloData;
+    ROOT::Experimental::REveProjectionManager* m_mngRhoZ;
+    ROOT::Experimental::REveProjectionManager* m_mngRPhi;
+    ROOT::Experimental::REveViewContext* m_viewContext;
+    ROOT::Experimental::REveCaloDataHist* m_caloData;
 
     CollectionManager(VsdProvider *event) : m_event(event)
     {
-        m_collections = gEve->GetScenes()->FindChild("Collections");
+        m_collections = ROOT::Experimental::gEve->GetScenes()->FindChild("Collections");
     }
 
-    void LoadCurrentEventInCollection(REveDataCollection *rdc)
+    void LoadCurrentEventInCollection(ROOT::Experimental::REveDataCollection *rdc)
     {
         m_isEventLoading = true;
         rdc->ClearItems();
@@ -50,7 +50,7 @@ public:
         std::string t = "dummy";
         for (auto vsd : vsdc->m_list)
         {
-            // printf ("add item tp REveColl\n"); vsd->dump();
+            // printf ("add item tp ROOT::Experimental::REveColl\n"); vsd->dump();
             rdc->AddItem(vsd, t, t);
         }
         rdc->ApplyFilter();
@@ -63,7 +63,7 @@ public:
     {
         for (auto &el : m_collections->RefChildren())
         {
-            auto c = dynamic_cast<REveDataCollection *>(el);
+            auto c = dynamic_cast<ROOT::Experimental::REveDataCollection *>(el);
             LoadCurrentEventInCollection(c);
         }
 
@@ -74,26 +74,19 @@ public:
         m_caloData->DataChanged();
     }
 
-    REveDataProxyBuilderBase *getProxyBuilderFromVSD(VsdCollection *vsdc)
+    ROOT::Experimental::REveDataProxyBuilderBase *getProxyBuilderFromVSD(VsdCollection *vsdc)
     {
-        if (vsdc->m_purpose == "Candidate")
-            return new CandidateProxyBuilder();
-        else if (vsdc->m_purpose == "Jet")
-            return new JetProxyBuilder();
-        else if (vsdc->m_purpose == "MET")
-            return new METProxyBuilder();
-        else if (vsdc->m_purpose == "Muon")
-            return new MuonProxyBuilder();
-        else if (vsdc->m_purpose == "Vertex")
-            return new VertexProxyBuilder();
-        else if (vsdc->m_purpose == "CaloTower")
+        // AMT: this is not necessary if ROOT::Experimental::REveCaloData is in globalscope
+        if (vsdc->m_purpose == "CaloTower")
             return new CaloTowerProxyBuilder(m_caloData);
 
         std::cout << typeid(vsdc).name() << '\n';
 
         // amt alternative way
         std::string pbn = vsdc->m_purpose + "ProxyBuilder";
-        // TClass* pbc = TClass::GetClass(pbn.c_str());
+        TClass* pbc = TClass::GetClass(pbn.c_str());
+        if (pbc)
+           return (ROOT::Experimental::REveDataProxyBuilderBase*)pbc->New();
 
         printf("can't find proxy for purpose %s \n", vsdc->m_purpose.c_str());
         return nullptr;
@@ -121,35 +114,35 @@ public:
         collection->SetMainColor(vsdc->m_color);
         collection->SetFilterExpr(vsdc->m_filter.c_str());
 
-        REveDataProxyBuilderBase *glBuilder = getProxyBuilderFromVSD(vsdc);
+        ROOT::Experimental::REveDataProxyBuilderBase *glBuilder = getProxyBuilderFromVSD(vsdc);
 
         // load data
         LoadCurrentEventInCollection(collection);
         glBuilder->SetCollection(collection);
         glBuilder->SetHaveAWindow(true);
 
-        for (auto &scene : gEve->GetScenes()->RefChildren())
+        for (auto &scene : ROOT::Experimental::gEve->GetScenes()->RefChildren())
         {
 
-            // REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
+            // ROOT::Experimental::ROOT::Experimental::REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
 
             if (strncmp(scene->GetCName(), "Table", 5) == 0)
                 continue;
             if (!strncmp(scene->GetCTitle(), "RhoZProjected", 8))
             {
-                REveElement *product = glBuilder->CreateProduct("RhoZViewType", m_viewContext);
+                ROOT::Experimental::REveElement *product = glBuilder->CreateProduct("RhoZViewType", m_viewContext);
                 m_mngRhoZ->ImportElements(product, scene);
                 continue;
             }
             if (!strncmp(scene->GetCTitle(), "RPhiProjected", 8))
             {
-                REveElement *product = glBuilder->CreateProduct("RPhiViewType", m_viewContext);
+                ROOT::Experimental::REveElement *product = glBuilder->CreateProduct("RPhiViewType", m_viewContext);
                 m_mngRPhi->ImportElements(product, scene);
                 continue;
             }
             else if ((!strncmp(scene->GetCName(), "Event scene", 8)))
             {
-                REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
+                ROOT::Experimental::REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
                 scene->AddElement(product);
             }
         }
@@ -157,17 +150,17 @@ public:
         glBuilder->Build();
 
         // Tables
-        auto tableBuilder = new REveTableProxyBuilder();
+        auto tableBuilder = new ROOT::Experimental::REveTableProxyBuilder();
         tableBuilder->SetHaveAWindow(true);
         tableBuilder->SetCollection(collection);
-        REveElement *tablep = tableBuilder->CreateProduct("table-type", m_viewContext);
+        ROOT::Experimental::REveElement *tablep = tableBuilder->CreateProduct("table-type", m_viewContext);
         auto tableMng = m_viewContext->GetTableViewInfo();
         if (collection == m_collections->FirstChild())
         {
             tableMng->SetDisplayedCollection(collection->GetElementId());
         }
 
-        for (auto &scene : gEve->GetScenes()->RefChildren())
+        for (auto &scene : ROOT::Experimental::gEve->GetScenes()->RefChildren())
         {
             if (strncmp(scene->GetCTitle(), "Table", 5) == 0)
             {
@@ -192,13 +185,13 @@ public:
 
         collection->setGLBuilder(glBuilder);
 
-        collection->GetItemList()->SetItemsChangeDelegate([&](REveDataItemList *collection, const REveDataCollection::Ids_t &ids)
+        collection->GetItemList()->SetItemsChangeDelegate([&](ROOT::Experimental::REveDataItemList *collection, const ROOT::Experimental::REveDataCollection::Ids_t &ids)
                                                           { this->ModelChanged(collection, ids); });
-        collection->GetItemList()->SetFillImpliedSelectedDelegate([&](REveDataItemList *collection, REveElement::Set_t &impSelSet, const std::set<int> &sec_idcs)
+        collection->GetItemList()->SetFillImpliedSelectedDelegate([&](ROOT::Experimental::REveDataItemList *collection, ROOT::Experimental::REveElement::Set_t &impSelSet, const std::set<int> &sec_idcs)
                                                                   { this->FillImpliedSelected(collection, impSelSet, sec_idcs); });
     }
 
-    void ModelChanged(REveDataItemList *itemList, const REveDataCollection::Ids_t &ids)
+    void ModelChanged(ROOT::Experimental::REveDataItemList *itemList, const ROOT::Experimental::REveDataCollection::Ids_t &ids)
     {
         if (m_isEventLoading)
             return;
@@ -213,7 +206,7 @@ public:
         }
     }
 
-    void FillImpliedSelected(REveDataItemList *itemList, REveElement::Set_t &impSelSet, const std::set<int> &sec_idcs)
+    void FillImpliedSelected(ROOT::Experimental::REveDataItemList *itemList, ROOT::Experimental::REveElement::Set_t &impSelSet, const std::set<int> &sec_idcs)
     {
 
         for (auto proxy : m_builders)
