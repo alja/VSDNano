@@ -13,7 +13,7 @@
 #include <ROOT/RFileDialog.hxx>
 #include "nlohmann/json.hpp"
 
-#include "evd.h"
+#include "evd_main.cc"
 
 #include <cstdio>
 #include <ctime>
@@ -680,7 +680,8 @@ void revetor()
                // gROOT->LoadMacro("evd.h");
                std::string dataPath = req["file"].get<std::string>();
                printf( "dataPath = %s \n", dataPath.c_str());
-               evd(dataPath.c_str());
+               auto *prov = new VsdProvider(dataPath.c_str());
+               evd_run(prov);
 
                auto gui = REX::gEve->GetWorld()->LastChild();
                std::string lp = logdirurl + log_fname;

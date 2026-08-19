@@ -1,4 +1,3 @@
-
 #===============================================================================
 # Configuration
 #===============================================================================
@@ -89,6 +88,20 @@ evd_run: evd_run.cc libVsdDict.so libFWDict.so
 	    -lROOTEve \
 	    $(ROOT_LIBS)
 
+service: service.cc libVsdDict.so libFWDict.so
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ \
+	    service.cc \
+	    -L. \
+	    -Wl,-rpath,'$$ORIGIN' \
+	    -Wl,--no-as-needed \
+	    -lVsdDict \
+	    -lFWDict \
+	    -lEG \
+	    -lGeom \
+	    -lROOTWebDisplay \
+	    -lROOTEve \
+	    $(ROOT_LIBS)
+
 
 #===============================================================================
 # CLEAN
@@ -97,7 +110,7 @@ evd_run: evd_run.cc libVsdDict.so libFWDict.so
 clean:
 	rm -f evd_run
 	rm -f libVsdDict.so libFWDict.so
-	rm -f VsdDict.cc VsdDict.o VsdDict_rdict.pcm
+	rm -f VsdDict.cc VsdDict.o libFWDict_rdict.pcm
 	rm -f FWDict.cc FWDict.o FWDict_rdict.pcm
 	rm -f FWEventManager.o VsdProxies.o
 	rm -f *_dictContent.h *_dictUmbrella.h
