@@ -92,6 +92,29 @@ for (const auto &p : paths) {
    return top;
 }
 
+void addMuonMagnetShape(REveElement* group)
+{
+
+   gGeoManager->cd("cms:OCMS/muonBase:MUON_1/mgnt:MGNT_1");
+   TGeoNode *node = gGeoManager->GetCurrentNode();
+   auto shape = dynamic_cast<TGeoCompositeShape *>(node->GetVolume()->GetShape());
+
+   // 3 levels of composite shape
+   auto cs = dynamic_cast<TGeoCompositeShape *>(shape);
+   TGeoBoolNode *bnode = shape->GetBoolNode();
+   auto cls = dynamic_cast<TGeoCompositeShape *>(bnode->GetLeftShape());
+   auto *node2 = cs->GetBoolNode();
+   auto csll = dynamic_cast<TGeoCompositeShape *>(node2->GetLeftShape());
+   auto *nodell = csll->GetBoolNode();
+   auto *pcon = dynamic_cast<TGeoPcon *>(nodell->GetLeftShape());
+
+   // reve element
+   auto rgs = new REveGeoShape("MGNT_1");
+   rgs->SetShape(pcon);
+   rgs->SetMainColor(group->GetMainColor());
+   group->AddElement(rgs);
+}
+
 //------------------------------------------------------------------------------
 void write_geo_extract_full()
 {
@@ -100,7 +123,7 @@ void write_geo_extract_full()
    auto eveMng = REveManager::Create();
    eveMng->AllowMultipleRemoteConnections(false, false);
 
-   TGeoManager::Import("/home/viz/root-ws/cmsSimGeo2021.root");
+   TGeoManager::Import("cmsSimGeo2021.root");
 
    // ---------------- TRACKER ----------------
    std::vector<std::string> trackerPaths = {
@@ -129,8 +152,7 @@ void write_geo_extract_full()
       "cms:OCMS/muonBase:MUON_1/muonBase:MB_1/muonBase:MBWheel_1N_2",
       "cms:OCMS/muonBase:MUON_1/muonBase:MB_1/muonBase:MBWheel_2N_1",
       "cms:OCMS/muonBase:MUON_1/mf:MEP_1",
-      "cms:OCMS/muonBase:MUON_1/mf:MEN_2",
-      "cms:OCMS/muonBase:MUON_1/mgnt:MGNT_1"
+      "cms:OCMS/muonBase:MUON_1/mf:MEN_2"
    };
 
    // ---------------- ECAL ----------------
@@ -153,9 +175,12 @@ void write_geo_extract_full()
 
    // Build subsystems
    auto tracker = buildGroup("tracker", trackerPaths, kRed);
-   auto muon    = buildGroup("muon",    muonPaths,    kBlue);
+   auto muon    = buildGroup("muon",    muonPaths,    216);
    auto ecal    = buildGroup("ecal",    ecalPaths,    kGreen+2);
    auto hcal    = buildGroup("hcal",    hcalPaths,    kOrange+7);
+
+
+   addMuonMagnetShape(muon);
 
    // Add to scene
    auto scene = eveMng->GetEventScene();
@@ -178,7 +203,7 @@ void write_geo_extract_full()
     TFile f("cms_extract.root", "RECREATE");
    all->WriteExtract("VSDGeo");
 
-// RPhi
+   // RPhi
    tracker->FindChild("TrackerBulkhead_1")->SetRnrSelf(false);
    tracker->FindChild("TrackerBulkhead_2")->SetRnrSelf(false);
    tracker->FindChild("TIB_1")->SetMainTransparency(90);
@@ -195,7 +220,7 @@ void write_geo_extract_full()
    muon->FindChild("MBWheel_2N_1")->SetRnrSelf(false);
    muon->FindChild("MEP_1")->SetRnrSelf(false);
    muon->FindChild("MEN_2")->SetRnrSelf(false);
-   muon->FindChild("MGNT_1")->SetRnrSelf(false);
+   // muon->FindChild("MGNT_1")->SetRnrSelf(false);
 
    ecal->FindChild("EREG_1")->SetRnrSelf(false);
    ecal->FindChild("EREG_2")->SetRnrSelf(false);
@@ -209,7 +234,7 @@ void write_geo_extract_full()
 
    all->WriteExtract("VSDGeoProj");
 
-// 3D
+   // 3D
    tracker->FindChild("PixelBarrel_1")->SetRnrSelf(false);
    tracker->FindChild("TIB_1")->SetRnrSelf(false);
    tracker->FindChild("TIDF_1")->SetRnrSelf(false);
@@ -219,8 +244,8 @@ void write_geo_extract_full()
    tracker->FindChild("TEC_2")->SetRnrSelf(false);
    tracker->FindChild("TrackerOuterCylinder_1")->SetMainTransparency(95);
    muon->SetRnrChildren(false);
-ecal->SetRnrChildren(false);
-hcal->SetRnrChildren(false);
+   ecal->SetRnrChildren(false);
+   hcal->SetRnrChildren(false);
    all->WriteExtract("VSDGeo3D");
 
    f.Close();
