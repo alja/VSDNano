@@ -34,8 +34,8 @@
 
 static int SERVICE_PORT = 5555;
 static int MAX_SERVERS = 100;
-static int USER_TIMEOUT = 144000;
-static int DISCONNECT_TIMEOUT = 600;
+static int USER_TIMEOUT = 604800;
+static int DISCONNECT_TIMEOUT = 604800;
 
 namespace REX = ROOT::Experimental;
 
