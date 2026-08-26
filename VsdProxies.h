@@ -456,7 +456,7 @@ public:
       muonPropagator_g->SetMagFieldObj(new REveMagFieldDuo(350, -3.5, 2.0));
       muonPropagator_g->SetMaxR(850);
       muonPropagator_g->SetMaxZ(1100);
-      muonPropagator_g->SetMaxOrbs(6);
+      muonPropagator_g->SetMaxOrbs(0.5);
       muonPropagator_g->IncRefCount();
    }
 

@@ -604,7 +604,7 @@ void createScenesAndViews()
    prop->SetMagFieldObj(new REveMagFieldDuo(350, -3.5, 2.0));
    prop->SetMaxR(r);
    prop->SetMaxZ(z);
-   prop->SetMaxOrbs(6);
+   prop->SetMaxOrbs(0.5);
    prop->IncRefCount();
 
 
