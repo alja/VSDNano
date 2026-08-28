@@ -147,6 +147,8 @@ let pthis = this;
 
          this.byId("fileNav").setText(event + "/" + nevents);
          this.byId("fileNav").setDesign("Bold");
+
+         this.byId("projections").setValue(this.fw2gui.planeAngle);
       },
 
       nextEvent : function(oEvent) {
@@ -214,6 +216,23 @@ let pthis = this;
          let pd_milisec = oEvent.getParameter("value") * 1000;
          this.mgr.SendMIR("playdelay(" + pd_milisec + ")", this.fw2gui.fElementId, "EventManager");
       },
+      
+      onProjectionSubmit: function (oEvent) {
+    var nValue = Number(oEvent.getParameter("value"));
+
+    if (isNaN(nValue) || nValue < -180 || nValue > 180) {
+        sap.m.MessageToast.show(
+            "Projection angle must be between -180 and 180."
+        );
+        return;
+    }
+
+    this.mgr.SendMIR(
+        "setPlaneRotation(" + nValue + ", true)",
+        this.fw2gui.fElementId,
+        "EventManager"
+    );
+}
 
    });
 });

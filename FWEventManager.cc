@@ -4,6 +4,7 @@
 #include "FWCollectionManager.h"
 
 #include <ROOT/REveManager.hxx>
+#include <ROOT/REveStraightLineSet.hxx>
 #include "TFile.h"
 
 using namespace ROOT::Experimental;
@@ -107,6 +108,7 @@ void EventManager::GotoEvent(int id)
     UpdateTitle();
     m_collectionMng->RenewEvent();
     // caloData->DataChanged();
+    setPlaneRotation(0, true);
 }
 
 void EventManager::UpdateTitle()
@@ -114,6 +116,7 @@ void EventManager::UpdateTitle()
     // printf("======= update title %lld/%lld event ifnfo run=[%d], lumi=[%d], event = [%lld]\n", m_event->m_eventIdx, m_event->GetNumEvents(),
     //      m_event->m_eventInfo.lumi(), m_event->m_eventInfo.run(), m_event->m_eventInfo.event());
     SetTitle(Form("%lld/%lld/%d/%d/%lld", m_event->m_eventIdx, m_event->GetNumEvents(), m_event->m_eventInfo.lumi(), m_event->m_eventInfo.run(), m_event->m_eventInfo.event()));
+    SetName(m_event->m_title); // VSD provider stores file name in title
     StampObjProps();
 }
 
@@ -128,4 +131,72 @@ void EventManager::NextEvent()
     GotoEvent(id);
 }
 
+void RotateLineAxis(float angle)
+{
+    REveScene *scene = nullptr;
+
+    // Find scene
+    for (auto *el : gEve->GetScenes()->RefChildren())
+    {
+        printf("Scene: %s\n", el->GetName());
+
+        if (el->GetName() == TString("Projection Geometry RPhi"))
+        {
+            scene = static_cast<REveScene *>(el);
+            break;
+        }
+    }
+
+    printf("Found scene: %s\n", scene->GetName());
+
+    // Find LineSetAxis
+    REveStraightLineSetProjected* axisp = nullptr;
+    for (auto *el : scene->RefChildren())
+    {
+        printf("lineset compare %s %s \n", el->GetName().c_str(), "LineSetAxis" );
+        if (el->GetName() == "LineSetAxis [P]")
+        {
+            axisp = static_cast<REveStraightLineSetProjected *>(el);
+            break;
+        }
+    }
+
+    if (axisp)
+    {
+        printf("Found LineSetAxis: %p\n", (void *)axisp);
+        auto axis = dynamic_cast<REveStraightLineSet*>(axisp);
+        axis->RefMainTrans().UnitTrans();
+        axis->RefMainTrans().RotateLF(1, 2, TMath::DegToRad() * angle);
+        axis->StampObjProps();
+        axisp->StampObjProps();
+    }
+    else
+        printf("LineSetAxis not found\n");
+}
+
+
+void EventManager::setPlaneRotation(float angle, bool project)
+{
+    float rad = TMath::DegToRad()*angle;
+    REveRhoZProjection* p =  dynamic_cast<ROOT::Experimental::REveRhoZProjection*>(m_collectionMng->m_mngRhoZ->GetProjection());
+    REveVector nVec(TMath::Sin(rad), TMath::Cos(rad), 0);
+    p->SetPlaneNormal(nVec);
+
+    printf("EventManager::setPlaneRotation\n");
+    //p->fProjectedPlaneNormal.Dump();
+
+    RotateLineAxis(angle);
+    m_planeAngle = angle;
+    StampObjProps();
+
+    if (project) m_collectionMng->m_mngRhoZ->ProjectChildren();
+}
+
+int EventManager::WriteCoreJson(nlohmann::json &j, int rnr_offset)
+{
+    int res = REveElement::WriteCoreJson(j, -1);
+    j["planeAngle"] = m_planeAngle;
+
+    return res;
+}
 void EventManager::FilterPublished(const char *data) {}

@@ -100,19 +100,16 @@
 
             <Label id="dateLabel" />
 
-        <ToolbarSpacer  />
-        <CheckBox id="enableFilter" text="EnableFilter" select="enableFilter">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="40px" />
-          </layoutData>
-        </CheckBox>
-
-        <Button id="eventFilter" text="FilterDialog-Test" press="eventFilterShow">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="High" shrinkable="true" minWidth="40px" />
-          </layoutData>
-        </Button>
-
+        <ToolbarSpacer  /><Label text="RhoZ Projection Plane Angle" labelFor="projections" />
+        <StepInput
+            id="projections"
+            value="0"
+            min="-180"
+            max="180"
+            step="1"
+            width="7em"
+            change="onProjectionSubmit" />
+  
         <!-- contentRight Data Info -->
         <ToolbarSpacer />
         <Label id="fileName" text="__________________________________" textAlign="End">
@@ -128,19 +125,6 @@
 
          </OverflowToolbar>
       </subHeader>
-<!--
-      <subHeader>
-         <OverflowToolbar>
-            <Button icon="sap-icon://open-folder" type="Transparent" />
-            <Button icon="sap-icon://decline" type="Transparent"
-               press="onCloseCanvasPress" />
-            <Button icon="sap-icon://stop" type="Transparent"
-               press="onInterruptPress" />
-            <Button icon="sap-icon://system-exit" type="Transparent"
-               tooltip="Quit ROOT session" press="onQuitRootPress" />
-         </OverflowToolbar>
-      </subHeader>
--->
       <content>
         <l:Splitter orientation="Horizontal" id="MainAreaSplitter">
           <l:contentAreas>
