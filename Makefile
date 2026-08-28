@@ -3,7 +3,7 @@
 #===============================================================================
 
 CPPFLAGS := -I. -I$(shell root-config --incdir)
-CXXFLAGS := -O0 -g -fPIC $(shell root-config --auxcflags)
+CXXFLAGS := -O2 -g -fPIC $(shell root-config --auxcflags)
 ROOT_LIBS := $(shell root-config --libs)
 
 CXX ?= c++
@@ -74,7 +74,7 @@ UserVsd.root: UserVsd.py
 # EXECUTABLE
 #===============================================================================
 
-evd_run: evd_run.cc libVsdDict.so libFWDict.so
+evd_run: evd_run.cc evd_main.cc VsdProvider.h libVsdDict.so libFWDict.so
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ \
 	    evd_run.cc \
 	    -L. \
@@ -88,7 +88,7 @@ evd_run: evd_run.cc libVsdDict.so libFWDict.so
 	    -lROOTEve \
 	    $(ROOT_LIBS)
 
-service: service.cc libVsdDict.so libFWDict.so
+service:  evd_run.cc evd_main.cc service.cc libVsdDict.so libFWDict.so
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ \
 	    service.cc \
 	    -L. \
@@ -110,8 +110,8 @@ service: service.cc libVsdDict.so libFWDict.so
 clean:
 	rm -f evd_run
 	rm -f libVsdDict.so libFWDict.so
-	rm -f VsdDict.cc VsdDict.o libFWDict_rdict.pcm
-	rm -f FWDict.cc FWDict.o FWDict_rdict.pcm
+	rm -f VsdDict.cc VsdDict.o VsdDict_rdict.pcm
+	rm -f FWDict.cc FWDict.o FWDict_rdict.pcm libFWDict_rdict.pcm
 	rm -f FWEventManager.o VsdProxies.o
 	rm -f *_dictContent.h *_dictUmbrella.h
 
