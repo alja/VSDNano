@@ -56,6 +56,8 @@ public:
     // construcutor
     VsdProvider(std::string fn)
     {
+        m_title = fn;
+
         TFile *f = TFile::Open(fn.c_str(), "READ");
         TTree *tree = (TTree *)f->Get("VSD");
         printf("\n--- Starting branch processing ...\n");
