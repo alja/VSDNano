@@ -245,15 +245,6 @@ void createScenesAndViews()
    if (1)
    {
        auto rhoZEventScene = gEve->SpawnNewScene("RhoZ Scene", "RhoZProjected");
-       mngRhoZ = new REveProjectionManager(REveProjection::kPT_RhoZ);
-
-       // distortion
-       mngRhoZ->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
-       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 310, 1.0);
-       mngRhoZ->GetProjection()->AddPreScaleEntry(0, 370, 0.6);
-       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 580, 0.4);
-
-       mngRhoZ->SetImportEmpty(true);
        auto rhoZView = gEve->SpawnNewViewer("RhoZ View");
        rhoZView->SetCameraType(REveViewer::kCameraOrthoXOY);
        // it is working but in the wrong direction
@@ -262,17 +253,33 @@ void createScenesAndViews()
        rhoZView->GetCamera()->SetOrthoZoom(1.40);
        rhoZView->AddScene(rhoZEventScene);
 
-       auto pgeoScene = gEve->SpawnNewScene("Projection Geometry RhoZ");
-       mngRhoZ->SetCurrentDepth(-4);
-       mngRhoZ->ImportElements(b1, pgeoScene);
 
-       REveGeoShape *gseRhoZ = getExtract("VSDGeo");
-       mngRhoZ->ImportElements(gseRhoZ, pgeoScene);
-       rhoZView->AddScene(pgeoScene);
+
+       // rho z event
+       mngRhoZ = new REveProjectionManager(REveProjection::kPT_RhoZ);
+       mngRhoZ->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
+       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 310, 1.0);
+       mngRhoZ->GetProjection()->AddPreScaleEntry(0, 370, 0.6);
+       mngRhoZ->GetProjection()->AddPreScaleEntry(1, 580, 0.4);
+       mngRhoZ->SetImportEmpty(true);
        mngRhoZ->SetCurrentDepth(-1);
        mngRhoZ->ImportElements(calo3d, rhoZEventScene);
        mngRhoZ->SetCurrentDepth(0);
        doFishEyeDistortion(mngRhoZ, 0.8);
+
+       // geo rhoz mng
+       auto  mngRhoZGeo = new REveProjectionManager(REveProjection::kPT_RhoZ);
+       mngRhoZGeo->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
+       mngRhoZGeo->GetProjection()->AddPreScaleEntry(1, 310, 1.0);
+       mngRhoZGeo->GetProjection()->AddPreScaleEntry(0, 370, 0.6);
+       mngRhoZGeo->GetProjection()->AddPreScaleEntry(1, 580, 0.4);
+       mngRhoZGeo->SetImportEmpty(true);
+       auto pgeoScene = gEve->SpawnNewScene("Projection Geometry RhoZ");
+       rhoZView->AddScene(pgeoScene);
+       mngRhoZGeo->SetCurrentDepth(-4);
+       mngRhoZGeo->ImportElements(b1, pgeoScene);
+       mngRhoZGeo->ImportElements(getExtract("VSDGeo"), pgeoScene);
+       doFishEyeDistortion(mngRhoZGeo, 0.8);
    }
       // collections
    gEve->SpawnNewScene("Collections", "Collections");
