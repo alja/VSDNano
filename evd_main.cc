@@ -164,7 +164,8 @@ void createScenesAndViews()
       column("pt",  1, "i.pt()").
       column("eta", 3, "i.eta()").
       column("phi", 3, "i.phi()").
-      column("charge", 3, "i.charge()");
+      column("charge", 3, "i.charge()").
+      column("pdgId", 0, "i.pdgId()");
 
    tableInfo->table("VsdElectron").
       column("pt",  1, "i.pt()").
@@ -303,7 +304,7 @@ void evd_run(VsdProvider *prov)
 
    ROOT::RWebWindowsManager::SetLoopbackMode(false);
    ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false);
-   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("10.4");
+   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("11.0");
 
    std::string locPath = "ui5";
    gEve->AddLocation("unidir/", locPath);

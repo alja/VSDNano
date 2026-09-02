@@ -63,6 +63,7 @@ public:
    float m_eta{0.f}; float m_phi{0.f}; float m_pt{0.f};
    float m_posX{0.f}; float m_posY{0.f}; float m_posZ{0.f};
    int m_charge{0};
+   int m_pdgId{0}; // optional PDG id, e.g. for gen-level particles; 0 = unset
 
 public:
    VsdCandidate() = default;
@@ -75,6 +76,7 @@ public:
    float eta() const { return m_eta; }
    float pt() const { return m_pt; }
    float charge() const { return m_charge; }
+   int pdgId() const { return m_pdgId; }
 
    float posX() const { return m_posX;}
    float posY() const { return m_posY;}
@@ -84,6 +86,7 @@ public:
    void setEta(float x) { m_eta = x;}
    void setPhi(float x) { m_phi = x;}
    void setCharge(float x) { m_charge = x;}
+   void setPdgId(int x) { m_pdgId = x; }
 
    void setPos(float ix, float iy, float iz) {m_posX = ix, m_posY = iy, m_posZ = iz;}
 
