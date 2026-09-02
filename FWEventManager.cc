@@ -138,8 +138,6 @@ void RotateLineAxis(float angle)
     // Find scene
     for (auto *el : gEve->GetScenes()->RefChildren())
     {
-        printf("Scene: %s\n", el->GetName());
-
         if (el->GetName() == TString("Projection Geometry RPhi"))
         {
             scene = static_cast<REveScene *>(el);
@@ -153,7 +151,6 @@ void RotateLineAxis(float angle)
     REveStraightLineSetProjected* axisp = nullptr;
     for (auto *el : scene->RefChildren())
     {
-        printf("lineset compare %s %s \n", el->GetName().c_str(), "LineSetAxis" );
         if (el->GetName() == "LineSetAxis [P]")
         {
             axisp = static_cast<REveStraightLineSetProjected *>(el);
@@ -163,10 +160,9 @@ void RotateLineAxis(float angle)
 
     if (axisp)
     {
-        printf("Found LineSetAxis: %p\n", (void *)axisp);
         auto axis = dynamic_cast<REveStraightLineSet*>(axisp);
         axis->RefMainTrans().UnitTrans();
-        axis->RefMainTrans().RotateLF(1, 2, TMath::DegToRad() * angle);
+        axis->RefMainTrans().RotatePF(2, 1, TMath::DegToRad() * angle);
         axis->StampObjProps();
         axisp->StampObjProps();
     }
@@ -195,8 +191,7 @@ void EventManager::setPlaneRotation(float angle, bool project)
 int EventManager::WriteCoreJson(nlohmann::json &j, int rnr_offset)
 {
     int res = REveElement::WriteCoreJson(j, -1);
-    j["planeAngle"] = m_planeAngle;
-
+    j["planeAngle"] = std::round(m_planeAngle * 100.0f) / 100.0f;
     return res;
 }
 void EventManager::FilterPublished(const char *data) {}

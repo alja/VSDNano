@@ -101,14 +101,25 @@
             <Label id="dateLabel" />
 
         <ToolbarSpacer  /><Label text="RhoZ Projection Plane Angle" labelFor="projections" />
-        <StepInput
-            id="projections"
-            value="0"
-            min="-180"
-            max="180"
-            step="1"
-            width="7em"
-            change="onProjectionSubmit" />
+   <HBox alignItems="Center">
+    <Button
+        icon="sap-icon://less"
+        press="onProjectionStepDown"
+        tooltip="Decrease by 1" />
+
+    <Input
+        id="projections"
+        value="0"
+        type="Number"
+        width="5em"
+        textAlign="Center"
+        change="onProjectionSubmit" />
+
+    <Button
+        icon="sap-icon://add"
+        press="onProjectionStepUp"
+        tooltip="Increase by 1" />
+</HBox>
   
         <!-- contentRight Data Info -->
         <ToolbarSpacer />

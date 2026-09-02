@@ -216,22 +216,77 @@ let pthis = this;
          let pd_milisec = oEvent.getParameter("value") * 1000;
          this.mgr.SendMIR("playdelay(" + pd_milisec + ")", this.fw2gui.fElementId, "EventManager");
       },
-      
-      onProjectionSubmit: function (oEvent) {
-    var nValue = Number(oEvent.getParameter("value"));
 
-    if (isNaN(nValue) || nValue < -180 || nValue > 180) {
-        sap.m.MessageToast.show(
-            "Projection angle must be between -180 and 180."
-        );
-        return;
-    }
+      /*   onProjectionSubmit: function (oEvent) {
+            var nValue = Number(oEvent.getParameter("value"));
+   
+            if (isNaN(nValue) || nValue < -180 || nValue > 180) {
+               sap.m.MessageToast.show(
+                  "Projection angle must be between -180 and 180."
+               );
+               return;
+            }
+   
+            this.mgr.SendMIR(
+               "setPlaneRotation(" + nValue + ", true)",
+               this.fw2gui.fElementId,
+               "EventManager"
+            );
+         }
+         */onProjectionStepUp: function () {
+   const oInput = this.byId("projections");
+   let value = parseFloat(oInput.getValue());
 
-    this.mgr.SendMIR(
-        "setPlaneRotation(" + nValue + ", true)",
-        this.fw2gui.fElementId,
-        "EventManager"
-    );
+   if (isNaN(value))
+      value = 0;
+
+   value += 1;
+
+   if (value > 180)
+      value = 180;
+
+   value = Math.round(value * 100) / 100;
+
+   oInput.setValue(value);
+   this.onProjectionSubmit();
+},
+
+onProjectionStepDown: function () {
+   const oInput = this.byId("projections");
+   let value = parseFloat(oInput.getValue());
+
+   if (isNaN(value))
+      value = 0;
+
+   value -= 1;
+
+   if (value < -180)
+      value = -180;
+
+   value = Math.round(value * 100) / 100;
+
+   oInput.setValue(value);
+   this.onProjectionSubmit();
+},
+
+onProjectionSubmit: function (oEvent) {
+   const oInput = this.byId("projections");
+   let value = parseFloat(oInput.getValue());
+
+   if (isNaN(value)) {
+      oInput.setValue(0);
+      return;
+   }
+
+   value = Math.round(value * 100) / 100;
+
+   console.log("Projection:", value);
+
+   this.mgr.SendMIR(
+      "setPlaneRotation(" + value + ", true)",
+      this.fw2gui.fElementId,
+      "EventManager"
+   );
 }
 
    });
