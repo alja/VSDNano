@@ -145,8 +145,9 @@ void createScenesAndViews()
    prop->SetMagFieldObj(new REveMagFieldDuo(350, -3.5, 2.0));
    prop->SetMaxR(r);
    prop->SetMaxZ(z);
-   prop->SetMaxOrbs(6);
+   prop->SetMaxOrbs(0.5);
    prop->IncRefCount();
+   prop->SetDelta(0.5);
 
    viewContext = new REveViewContext();
    viewContext->SetBarrel(r, z);
@@ -228,15 +229,15 @@ void createScenesAndViews()
 
        REveStraightLineSet* ls = new REveStraightLineSet("LineSetAxis");
        ls->InitMainTrans();
-       ls->AddLine(0, 0, 0, 700, 0, 0);
-       ls->AddLine(0, 0, 0, 0, 700, 0);
+       ls->AddLine(-700, 0, 0, 700, 0, 0);
+       ls->AddLine(0, -700, 0, 0, 700, 0);
        ls->SetMainColor(kBlack);
        mngRPhi->ImportElements(ls, pgeoScene);
 
        REveGeoShape *gseProj = getExtract("VSDGeoProj");
        mngRPhi->ImportElements(gseProj, pgeoScene);
        rPhiView->AddScene(pgeoScene);
-       mngRPhi->SetCurrentDepth(-1);
+       mngRPhi->SetCurrentDepth(2);
        mngRPhi->ImportElements(calo3d, rPhiEventScene);
        mngRPhi->SetCurrentDepth(0);
        doFishEyeDistortion(mngRPhi, 1);
