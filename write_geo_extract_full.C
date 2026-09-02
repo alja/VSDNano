@@ -111,7 +111,8 @@ void addMuonMagnetShape(REveElement* group)
    // reve element
    auto rgs = new REveGeoShape("MGNT_1");
    rgs->SetShape(pcon);
-   rgs->SetMainColor(group->GetMainColor());
+   rgs->SetMainTransparency(85);
+   rgs->SetMainColor(kGray);
    group->AddElement(rgs);
 }
 
