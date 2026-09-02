@@ -114,4 +114,5 @@ clean:
 	rm -f FWDict.cc FWDict.o FWDict_rdict.pcm libFWDict_rdict.pcm
 	rm -f FWEventManager.o VsdProxies.o
 	rm -f *_dictContent.h *_dictUmbrella.h
+	rm -f service
 
