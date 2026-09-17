@@ -188,10 +188,51 @@ void EventManager::setPlaneRotation(float angle, bool project)
     if (project) m_collectionMng->m_mngRhoZ->ProjectChildren();
 }
 
+void EventManager::setRhoZDistortionStrength(float s)
+{
+    m_rhoZDistortionStrength = s;
+    float d = 0.005f * s;
+    m_collectionMng->m_mngRhoZ->GetProjection()->SetDistortion(d);
+    m_collectionMng->m_mngRhoZGeo->GetProjection()->SetDistortion(d);
+    m_collectionMng->m_mngRhoZ->ProjectChildren();
+    m_collectionMng->m_mngRhoZGeo->ProjectChildren();
+    StampObjProps();
+}
+
+void EventManager::setRhoZDistortionRadius(float r)
+{
+    m_rhoZDistortionRadius = r;
+    m_collectionMng->m_mngRhoZ->GetProjection()->SetFixR(r);
+    m_collectionMng->m_mngRhoZGeo->GetProjection()->SetFixR(r);
+    m_collectionMng->m_mngRhoZ->ProjectChildren();
+    m_collectionMng->m_mngRhoZGeo->ProjectChildren();
+    StampObjProps();
+}
+
+void EventManager::setRPhiDistortionStrength(float s)
+{
+    m_rPhiDistortionStrength = s;
+    m_collectionMng->m_mngRPhi->GetProjection()->SetDistortion(0.005f * s);
+    m_collectionMng->m_mngRPhi->ProjectChildren();
+    StampObjProps();
+}
+
+void EventManager::setRPhiDistortionRadius(float r)
+{
+    m_rPhiDistortionRadius = r;
+    m_collectionMng->m_mngRPhi->GetProjection()->SetFixR(r);
+    m_collectionMng->m_mngRPhi->ProjectChildren();
+    StampObjProps();
+}
+
 int EventManager::WriteCoreJson(nlohmann::json &j, int rnr_offset)
 {
     int res = REveElement::WriteCoreJson(j, -1);
     j["planeAngle"] = std::round(m_planeAngle * 100.0f) / 100.0f;
+    j["rhoZDistortionStrength"] = m_rhoZDistortionStrength;
+    j["rhoZDistortionRadius"] = m_rhoZDistortionRadius;
+    j["rPhiDistortionStrength"] = m_rPhiDistortionStrength;
+    j["rPhiDistortionRadius"] = m_rPhiDistortionRadius;
     return res;
 }
 void EventManager::FilterPublished(const char *data) {}

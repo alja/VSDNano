@@ -30,6 +30,7 @@
 // globals
 //ROOT::Experimental::REveManager* eveMng;
 ROOT::Experimental::REveProjectionManager* mngRhoZ;
+ROOT::Experimental::REveProjectionManager* mngRhoZGeo;
 ROOT::Experimental::REveProjectionManager* mngRPhi;
 ROOT::Experimental::REveViewContext* viewContext;
 ROOT::Experimental::REveCaloDataHist* caloData;
@@ -270,7 +271,7 @@ void createScenesAndViews()
        doFishEyeDistortion(mngRhoZ, 0.8);
 
        // geo rhoz mng
-       auto  mngRhoZGeo = new REveProjectionManager(REveProjection::kPT_RhoZ);
+       mngRhoZGeo = new REveProjectionManager(REveProjection::kPT_RhoZ);
        mngRhoZGeo->GetProjection()->AddPreScaleEntry(0, r - 2, 1.0);
        mngRhoZGeo->GetProjection()->AddPreScaleEntry(1, 310, 1.0);
        mngRhoZGeo->GetProjection()->AddPreScaleEntry(0, 370, 0.6);
@@ -319,6 +320,7 @@ void evd_run(VsdProvider *prov)
    collectionMng->m_viewContext = viewContext;
    collectionMng->m_mngRPhi = mngRPhi;
    collectionMng->m_mngRhoZ = mngRhoZ;
+   collectionMng->m_mngRhoZGeo = mngRhoZGeo;
 
    auto eventMng = new EventManager(collectionMng, prov);
    TClass::GetClass("EventManager", true);

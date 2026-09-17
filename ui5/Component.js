@@ -1,5 +1,6 @@
 sap.ui.define([
-   'sap/ui/core/UIComponent', 'sap/ui/core/mvc/XMLView', 'sap/m/routing/Router' /* Router is only needed for packaging */
+   'sap/ui/core/UIComponent', 'sap/ui/core/mvc/XMLView', 'sap/m/routing/Router', /* Router is only needed for packaging */
+   'custom/lib/GLTransformPatch'
 ], function(UIComponent, XMLView) {
    "use strict";
 
