@@ -23,7 +23,13 @@ private:
    std::condition_variable m_CV;
    bool m_autoplay{false};
    float m_planeAngle{0.f};
-   
+
+   // fish-eye distortion (Transform panel)
+   float m_rhoZDistortionStrength{0.8f};
+   float m_rhoZDistortionRadius{310.f};
+   float m_rPhiDistortionStrength{1.f};
+   float m_rPhiDistortionRadius{310.f};
+
 
 public:
    EventManager(CollectionManager* m, VsdProvider* e):REveElement("EventManager"), m_collectionMng(m), m_event(e) {}
@@ -45,6 +51,12 @@ public:
 
    // projections
    void setPlaneRotation(float angle, bool project = true);
+
+   // fish-eye distortion (Transform panel)
+   void setRhoZDistortionStrength(float s);
+   void setRhoZDistortionRadius(float r);
+   void setRPhiDistortionStrength(float s);
+   void setRPhiDistortionRadius(float r);
 };
 
 #endif

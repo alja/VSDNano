@@ -31,6 +31,7 @@ private:
     bool m_isEventLoading{false}; // don't process model changes when applying filter on new event
 public:
     ROOT::Experimental::REveProjectionManager* m_mngRhoZ;
+    ROOT::Experimental::REveProjectionManager* m_mngRhoZGeo;
     ROOT::Experimental::REveProjectionManager* m_mngRPhi;
     ROOT::Experimental::REveViewContext* m_viewContext;
     ROOT::Experimental::REveCaloDataHist* m_caloData;
