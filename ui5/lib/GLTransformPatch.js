@@ -15,14 +15,49 @@ sap.ui.define([
       return null;
    }
 
+   // Every value reprojects and re-streams the whole scene, so a drag produces far
+   // more updates than the server can process. Keep only the latest value per
+   // function and send it once the previous round trip is done, dropping the ones
+   // in between. Unlike skipping events outright, the value the slider ends on is
+   // always sent, even when it arrives while the server is still busy.
+   function makeSender(ctrl)
+   {
+      const kSendMS = 150; // at most one update per this interval, per function
+
+      let pending = new Map(); // funcName -> value waiting to be sent
+      let sent    = new Map(); // funcName -> value sent last
+      let timer   = null;
+
+      function flush()
+      {
+         timer = null;
+
+         if (ctrl.mgr.busyProcessingChanges) { // still redrawing, come back later
+            timer = setTimeout(flush, kSendMS);
+            return;
+         }
+
+         let em = findEventManager(ctrl.mgr);
+         if (em) {
+            for (let [funcName, value] of pending) {
+               if (sent.get(funcName) === value) continue; // nothing new to say
+               sent.set(funcName, value);
+               ctrl.mgr.SendMIR(funcName + "(" + value + ")", em.fElementId, "EventManager");
+            }
+         }
+         pending.clear();
+      }
+
+      return function (funcName, value)
+      {
+         pending.set(funcName, value);
+         if (!timer) timer = setTimeout(flush, kSendMS);
+      };
+   }
+
    function makeTransformControls(ctrl, kind)
    {
-      let sendMIR = function (funcName, value)
-      {
-         if (ctrl.mgr.busyProcessingChanges) return;
-         let em = findEventManager(ctrl.mgr);
-         if (em) ctrl.mgr.SendMIR(funcName + "(" + value + ")", em.fElementId, "EventManager");
-      };
+      let sendMIR = makeSender(ctrl);
 
       let strengthSlider = new sap.m.Slider({ min: 0, max: 2, step: 0.05, width: "100%", showAdvancedTooltip: true });
       strengthSlider.attachLiveChange(function () { sendMIR("set" + kind + "DistortionStrength", this.getValue()); });

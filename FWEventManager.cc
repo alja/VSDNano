@@ -190,6 +190,10 @@ void EventManager::setPlaneRotation(float angle, bool project)
 
 void EventManager::setRhoZDistortionStrength(float s)
 {
+    // Reprojecting the geometry costs ~35 ms against ~0.5 ms for the event
+    // scene, so never redo the work for a value we are already showing.
+    if (s == m_rhoZDistortionStrength) return;
+
     m_rhoZDistortionStrength = s;
     float d = 0.005f * s;
     m_collectionMng->m_mngRhoZ->GetProjection()->SetDistortion(d);
@@ -201,6 +205,8 @@ void EventManager::setRhoZDistortionStrength(float s)
 
 void EventManager::setRhoZDistortionRadius(float r)
 {
+    if (r == m_rhoZDistortionRadius) return;
+
     m_rhoZDistortionRadius = r;
     m_collectionMng->m_mngRhoZ->GetProjection()->SetFixR(r);
     m_collectionMng->m_mngRhoZGeo->GetProjection()->SetFixR(r);
@@ -211,6 +217,8 @@ void EventManager::setRhoZDistortionRadius(float r)
 
 void EventManager::setRPhiDistortionStrength(float s)
 {
+    if (s == m_rPhiDistortionStrength) return;
+
     m_rPhiDistortionStrength = s;
     m_collectionMng->m_mngRPhi->GetProjection()->SetDistortion(0.005f * s);
     m_collectionMng->m_mngRPhi->ProjectChildren();
@@ -219,6 +227,8 @@ void EventManager::setRPhiDistortionStrength(float s)
 
 void EventManager::setRPhiDistortionRadius(float r)
 {
+    if (r == m_rPhiDistortionRadius) return;
+
     m_rPhiDistortionRadius = r;
     m_collectionMng->m_mngRPhi->GetProjection()->SetFixR(r);
     m_collectionMng->m_mngRPhi->ProjectChildren();
