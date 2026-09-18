@@ -80,7 +80,17 @@
            <Button id="nextEvent" icon="sap-icon://media-play" 
                    press="nextEvent" />
 
-            
+        <Label text="GoToEvent:" labelFor="gotoEventInput">
+          <layoutData>
+            <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="30px" />
+          </layoutData>
+        </Label>
+        <Input id="gotoEventInput" width="5em" type="Number" textAlign="Center" value="0"
+               tooltip="Go to event by index" change="onGotoEventSubmit">
+          <layoutData>
+            <OverflowToolbarLayoutData priority="Low" shrinkable="true" minWidth="50px" />
+          </layoutData>
+        </Input>
         <Label text="AutoPlay:">
           <layoutData>
             <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="40px" />

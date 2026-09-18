@@ -149,6 +149,8 @@ let pthis = this;
          this.byId("fileNav").setDesign("Bold");
 
          this.byId("projections").setValue(this.fw2gui.planeAngle);
+
+         this.byId("gotoEventInput").setValue(event);
       },
 
       nextEvent : function(oEvent) {
@@ -157,6 +159,22 @@ let pthis = this;
 
       prevEvent : function(oEvent) {
          this.mgr.SendMIR("PreviousEvent()", this.fw2gui.fElementId, "EventManager");
+      },
+
+      gotoEvent : function(id) {
+         let nevents = parseInt(this.fw2gui.fTitle.split("/")[1]);
+
+         if (isNaN(id)) id = 0;
+         id = Math.max(0, Math.min(id, nevents - 1));
+
+         // show the clamped value
+         this.byId("gotoEventInput").setValue(id);
+
+         this.mgr.SendMIR("GotoEvent(" + id + ")", this.fw2gui.fElementId, "EventManager");
+      },
+
+      onGotoEventSubmit : function(oEvent) {
+         this.gotoEvent(parseInt(oEvent.getParameter("value")));
       },
 
       toggleGedEditor: function() {
