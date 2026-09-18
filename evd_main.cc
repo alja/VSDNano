@@ -223,6 +223,9 @@ void createScenesAndViews()
        mngRPhi->SetImportEmpty(true);
        auto rPhiView = gEve->SpawnNewViewer("RPhi View");
        rPhiView->SetCameraType(REveViewer::kCameraOrthoXOY);
+       // 16 matrix elements plus the ortho zoom, as logged by the client camera
+       rPhiView->GetCamera()->SetCamTransMtxStr(
+          "1,0,0,0,0,1,0,0,0,0,1,0,775.4515481255246,0,0,1,1.0650025206477394");
        rPhiView->AddScene(rPhiEventScene);
 
        auto pgeoScene = gEve->SpawnNewScene("Projection Geometry RPhi");
@@ -346,7 +349,17 @@ void evd_run(VsdProvider *prov)
 
    eventMng->GotoEvent(0);
 
-   ROOT::Experimental::gEve->GetViewers()->FirstChild()->SetName("3D View");
+   
+
+   auto defaultViewer = dynamic_cast<REveViewer *>(gEve->GetViewers()->FirstChild());
+   defaultViewer->SetName("3D View");
+   // 16 matrix elements plus the ortho zoom, as logged by the client camera
+   defaultViewer->GetCamera()->SetCamTransMtxStr(
+      "0.5959113929618195,-0.8004479141104681,0.06459681520399758,0,"
+      "0.802123192755044,0.5971585917027858,0,0,"
+      "-0.03857454319570427,0.05181460365323833,0.9979114447011297,0,"
+      "275.447406312539,-413.7404815474096,35.79954893399402,1,"
+      "1");
 
    gEnv->SetValue("WebEve.DisableShow", 1);
    gEve->Show();
