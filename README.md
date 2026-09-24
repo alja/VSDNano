@@ -1,6 +1,22 @@
 
 # UNIVERSAL DATA VISUALIZATION
 
+## Contents
+
+- [Main Idea](#main-idea)
+- [High Level Physics Objects](#high-level-physics-objects)
+  - [Detector Geometry and Magnetic Field](#detector-geometry-and-magnetic-field)
+- [Preview](#preview)
+- [Workflow](#workflow)
+  - [Build libraries](#build-libraries)
+  - [Write TTree with branches with vector of VSD objects](#write-ttree-with-branches-with-vector-of-vsd-objects)
+  - [Run event display through web service](#run-event-display-through-web-service)
+- [Developers information](#developers-information)
+  - [1. Build ROOT from a development branch](#1-build-root-from-a-development-branch)
+  - [2. Build VSDNano with that ROOT](#2-build-vsdnano-with-that-root)
+  - [3. Generate a sample VSD file with Python](#3-generate-a-sample-vsd-file-with-python)
+  - [4. Run evd_run](#4-run-evd_run)
+
 # Main Idea
 Provide a simple web-based service to read data in a custom format and visualize it using a set of high level objects such as jets, charged and neutral tracks, muons etc using custom detector geometry and a C++ macro to convert custom event representation to a standard format. The custom format is called Visual Summary Data (VSD) format.
 
