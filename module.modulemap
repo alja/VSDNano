@@ -1,0 +1,16 @@
+// C++ modules for the ROOT dictionaries. ROOT looks for this file next to
+// libVsdDict.so / libFWDict.so and loads the module named after the library
+// (without "lib"), so cling reads precompiled declarations instead of parsing
+// the headers at runtime.
+
+module VsdDict {
+  module "VsdBase.h" { header "VsdBase.h" export * }
+  export *
+}
+
+module FWDict {
+  module "FWEventManager.h" { header "FWEventManager.h" export * }
+  module "FWDataCollection.h" { header "FWDataCollection.h" export * }
+  module "VsdProxies.h" { header "VsdProxies.h" export * }
+  export *
+}

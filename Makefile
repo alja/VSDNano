@@ -18,9 +18,12 @@ all: evd_run
 # VSD DICTIONARY
 #===============================================================================
 
-VsdDict.cc: VsdBase.h Vsd_Linkdef.h
-	@rm -f VsdDict.cc VsdDict_rdict.pcm
-	rootcling -I. -f VsdDict.cc \
+# --cxxmodule builds VsdDict.pcm, a C++ module described in module.modulemap.
+# ROOT loads it with the library, so cling never parses VsdBase.h at runtime.
+VsdDict.cc: VsdBase.h Vsd_Linkdef.h module.modulemap
+	@rm -f VsdDict.cc VsdDict.pcm libVsdDict_rdict.pcm
+	rootcling -I. -f VsdDict.cc -s libVsdDict.so \
+	    --cxxmodule --moduleMapFile=module.modulemap \
 	    VsdBase.h \
 	    Vsd_Linkdef.h
 
@@ -37,9 +40,12 @@ libVsdDict.so: VsdDict.o
 # GRAPHICAL DICTIONARY
 #===============================================================================
 
-FWDict.cc: FWEventManager.h FWDataCollection.h VsdProxies.h FW_Linkdef.h
-	@rm -f FWDict.cc FWDict_rdict.pcm
-	rootcling -I. -f FWDict.cc \
+# Needs VsdDict.pcm: VsdProxies.h includes VsdBase.h, which is imported
+# from the VsdDict module instead of being compiled into this one.
+FWDict.cc: FWEventManager.h FWDataCollection.h VsdProxies.h FW_Linkdef.h module.modulemap VsdDict.cc
+	@rm -f FWDict.cc FWDict.pcm libFWDict_rdict.pcm
+	rootcling -I. -f FWDict.cc -s libFWDict.so \
+	    --cxxmodule --moduleMapFile=module.modulemap \
 	    FWEventManager.h \
 	    FWDataCollection.h \
 	    VsdProxies.h \
@@ -110,8 +116,8 @@ service:  evd_run.cc evd_main.cc service.cc libVsdDict.so libFWDict.so
 clean:
 	rm -f evd_run
 	rm -f libVsdDict.so libFWDict.so
-	rm -f VsdDict.cc VsdDict.o VsdDict_rdict.pcm
-	rm -f FWDict.cc FWDict.o FWDict_rdict.pcm libFWDict_rdict.pcm
+	rm -f VsdDict.cc VsdDict.o VsdDict.pcm libVsdDict_rdict.pcm VsdDict_rdict.pcm
+	rm -f FWDict.cc FWDict.o FWDict.pcm libFWDict_rdict.pcm FWDict_rdict.pcm
 	rm -f FWEventManager.o VsdProxies.o
 	rm -f *_dictContent.h *_dictUmbrella.h
 	rm -f service
