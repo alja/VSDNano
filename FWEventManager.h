@@ -5,6 +5,7 @@
 #include <mutex>
 #include <chrono>
 #include <condition_variable>
+#include <unordered_map>
 
 #include <ROOT/REveElement.hxx>
 
@@ -23,6 +24,8 @@ private:
    std::condition_variable m_CV;
    bool m_autoplay{false};
    float m_planeAngle{0.f};
+   // remembers the RhoZ projection plane angle set for each event
+   std::unordered_map<Long64_t, float> m_planeAngleByEvent;
 
    // fish-eye distortion (Transform panel)
    float m_rhoZDistortionStrength{0.8f};
