@@ -4,6 +4,21 @@
     <head>
 	<meta charset="UTF-8">
 	<title>Eve7 test</title>
+	<script type="text/javascript">
+	 // automatically type RQ_LineScale = 2
+	 (function () {
+	    var DEFAULT_RQ_PARAMS = { RQ_LineScale: '2' };
+	    var url = new URL(window.location.href);
+	    var changed = false;
+	    for (var key in DEFAULT_RQ_PARAMS) {
+	       if (!url.searchParams.has(key)) {
+	          url.searchParams.set(key, DEFAULT_RQ_PARAMS[key]);
+	          changed = true;
+	       }
+	    }
+	    if (changed) history.replaceState(null, '', url);
+	 })();
+	</script>
    <!--jsroot_importmap-->
 	<script type="text/javascript" src="jsrootsys/scripts/JSRoot.core.js"></script>
 	<style>
