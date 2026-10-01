@@ -108,7 +108,10 @@ void EventManager::GotoEvent(int id)
     UpdateTitle();
     m_collectionMng->RenewEvent();
     // caloData->DataChanged();
-    setPlaneRotation(0, true);
+
+    // Restore RhoZ plane angle was last set for this event. default for 0
+    auto it = m_planeAngleByEvent.find(m_event->m_eventIdx);
+    setPlaneRotation(it != m_planeAngleByEvent.end() ? it->second : 0.f, true);
 }
 
 void EventManager::UpdateTitle()
@@ -183,6 +186,7 @@ void EventManager::setPlaneRotation(float angle, bool project)
 
     RotateLineAxis(angle);
     m_planeAngle = angle;
+    m_planeAngleByEvent[m_event->m_eventIdx] = angle;
     StampObjProps();
 
     if (project) m_collectionMng->m_mngRhoZ->ProjectChildren();
