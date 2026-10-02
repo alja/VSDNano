@@ -4,6 +4,8 @@
 
 #pragma link C++ class EventManager+;
 
+#pragma link C++ class FWParameter+;
+#pragma link C++ class std::vector<FWParameter>+;
 #pragma link C++ class FWDataCollection+;
 
 #pragma link C++ class VertexProxyBuilder+;

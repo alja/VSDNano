@@ -73,15 +73,10 @@ public:
    {
       ROOT::Experimental::REveDataProxyBuilderBase::SetCollection(collection);
       auto fwc = dynamic_cast<FWDataCollection *>(collection);
-      /*
-      fwc->m_config.push_back({{"val", true}, {"type", "Bool"}, {"name", "DrawEllipse"}});
-      fwc->m_config.push_back({{"val", 10}, {"type", "Long"}, {"name", "ScaleEllipse"}});
-      fwc->m_config.push_back({{"val", 5}, {"type", "Long"}, {"name", "MarkerSize"}});
-      */
-      fwc->assertParamter({{"val", true}, {"type", "Bool"}, {"name", "DrawEllipse"}});
-      fwc->assertParamter({{"val", true}, {"type", "Bool"}, {"name", "DrawEllipseSphere"}});
-      fwc->assertParamter({{"val", 10}, {"type", "Long"}, {"name", "ScaleEllipse"}});
-      fwc->assertParamter({{"val", 5}, {"type", "Long"}, {"name", "MarkerSize"}});
+      fwc->assertParameter("DrawEllipse", true);
+      fwc->assertParameter("DrawEllipseSphere", true);
+      fwc->assertParameter("ScaleEllipse", 10L);
+      fwc->assertParameter("MarkerSize", 5L);
    }
 
    using ROOT::Experimental::REveDataSimpleProxyBuilderTemplate<VsdVertex>::BuildItem;
