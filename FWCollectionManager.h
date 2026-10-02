@@ -81,8 +81,6 @@ public:
         if (vsdc->m_purpose == "CaloTower")
             return new CaloTowerProxyBuilder(m_caloData);
 
-        std::cout << typeid(vsdc).name() << '\n';
-
         // amt alternative way
         std::string pbn = vsdc->m_purpose + "ProxyBuilder";
         TClass* pbc = TClass::GetClass(pbn.c_str());

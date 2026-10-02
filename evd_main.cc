@@ -109,8 +109,6 @@ REveGeoShape* getExtract(const char* extract_name)
 
    while ((key = (TKey *)next())) {
 
-      std::cout << "class name = " << key->GetClassName() << "\n";
-
       TClass *cl = TClass::GetClass(key->GetClassName());
 
       if (!cl)
@@ -118,7 +116,6 @@ REveGeoShape* getExtract(const char* extract_name)
 
       if (cl->InheritsFrom("ROOT::Experimental::REveGeoShapeExtract")) {
 
-         std::cout << "Found extract: " << key->GetName() << "\n";
          if (std::strcmp(key->GetName(), extract_name) == 0)
          {
              auto gse =
@@ -208,7 +205,6 @@ void createScenesAndViews()
    b1->SetMainColor(kCyan);
 
    REveGeoShape* gse = getExtract("VSDGeo3D");
-   std::cout << "Exreact " << gse << "\n"; 
    gEve->GetGlobalScene()->AddElement(gse);
    // Projected RPhi
    if (1)
