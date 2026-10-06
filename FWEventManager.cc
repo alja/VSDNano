@@ -204,6 +204,7 @@ void EventManager::setRhoZDistortionStrength(float s)
     m_collectionMng->m_mngRhoZGeo->GetProjection()->SetDistortion(d);
     m_collectionMng->m_mngRhoZ->ProjectChildren();
     m_collectionMng->m_mngRhoZGeo->ProjectChildren();
+    if (m_collectionMng->m_axisRhoZ) m_collectionMng->m_axisRhoZ->UpdateTicks();
     StampObjProps();
 }
 
@@ -216,6 +217,7 @@ void EventManager::setRhoZDistortionRadius(float r)
     m_collectionMng->m_mngRhoZGeo->GetProjection()->SetFixR(r);
     m_collectionMng->m_mngRhoZ->ProjectChildren();
     m_collectionMng->m_mngRhoZGeo->ProjectChildren();
+    if (m_collectionMng->m_axisRhoZ) m_collectionMng->m_axisRhoZ->UpdateTicks();
     StampObjProps();
 }
 
@@ -226,6 +228,7 @@ void EventManager::setRPhiDistortionStrength(float s)
     m_rPhiDistortionStrength = s;
     m_collectionMng->m_mngRPhi->GetProjection()->SetDistortion(0.005f * s);
     m_collectionMng->m_mngRPhi->ProjectChildren();
+    if (m_collectionMng->m_axisRPhi) m_collectionMng->m_axisRPhi->UpdateTicks();
     StampObjProps();
 }
 
@@ -236,6 +239,7 @@ void EventManager::setRPhiDistortionRadius(float r)
     m_rPhiDistortionRadius = r;
     m_collectionMng->m_mngRPhi->GetProjection()->SetFixR(r);
     m_collectionMng->m_mngRPhi->ProjectChildren();
+    if (m_collectionMng->m_axisRPhi) m_collectionMng->m_axisRPhi->UpdateTicks();
     StampObjProps();
 }
 

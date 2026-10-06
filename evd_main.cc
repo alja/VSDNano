@@ -9,6 +9,7 @@
 #include "ROOT/REveScalableStraightLineSet.hxx"
 #include <ROOT/REveGeoShape.hxx>
 #include <ROOT/REveProjectionBases.hxx>
+#include <ROOT/REveProjectionAxis.hxx>
 #include <ROOT/REveProjectionManager.hxx>
 #include <ROOT/REveScene.hxx>
 #include <ROOT/REveTableProxyBuilder.hxx>
@@ -22,6 +23,8 @@
 #include <ROOT/REveStraightLineSet.hxx>
 #include <ROOT/REveManager.hxx>
 #include <ROOT/REveGeoShapeExtract.hxx>
+#include <ROOT/REveText.hxx>
+#include "TROOT.h"
 
 #include "FWCollectionManager.h"
 #include "FWEventManager.h"
@@ -32,6 +35,8 @@
 ROOT::Experimental::REveProjectionManager* mngRhoZ;
 ROOT::Experimental::REveProjectionManager* mngRhoZGeo;
 ROOT::Experimental::REveProjectionManager* mngRPhi;
+ROOT::Experimental::REveProjectionAxis* axisRPhi;
+ROOT::Experimental::REveProjectionAxis* axisRhoZ;
 ROOT::Experimental::REveViewContext* viewContext;
 ROOT::Experimental::REveCaloDataHist* caloData;
 
@@ -97,6 +102,33 @@ void doFishEyeDistortion(REveProjectionManager* projMgr, float s)
 
     // force an update
     projMgr->ProjectChildren();
+}
+
+// Scale with tick labels for a projected view, as in ROOT's
+// tutorials/visualisation/eve7/projection_axes.C. The axis goes into its own
+// overlay scene, which is drawn in front of the projected geometry. Its ticks
+// sit at round values in the original space and follow the projection, so they
+// must be rebuilt (UpdateTicks()) whenever the projection changes.
+REveProjectionAxis *addProjectionAxis(REveProjectionManager *mng, REveViewer *view, const char *name)
+{
+   static const char *kAxisFont = "LiberationSerif-Regular"; // ships with ROOT
+   static bool fontReady = false;
+   if (!fontReady) {
+      std::string fontDir = std::string(TROOT::GetDataDir().Data()) + "/fonts/";
+      REveText::AssertSdfFont(kAxisFont, fontDir + kAxisFont + ".ttf");
+      fontReady = true;
+   }
+
+   auto ovl = gEve->SpawnNewScene(Form("%s Axis", name), name);
+   ovl->SetIsOverlay(true);
+
+   auto axis = new REveProjectionAxis(mng, Form("%s Axis", name));
+   axis->SetFont(kAxisFont);
+   axis->SetFontSize(0.022);
+   ovl->AddElement(axis);
+
+   view->AddScene(ovl);
+   return axis;
 }
 
 REveGeoShape* getExtract(const char* extract_name)
@@ -242,6 +274,8 @@ void createScenesAndViews()
        mngRPhi->ImportElements(calo3d, rPhiEventScene);
        mngRPhi->SetCurrentDepth(0);
        doFishEyeDistortion(mngRPhi, 1);
+
+       axisRPhi = addProjectionAxis(mngRPhi, rPhiView, "RPhi");
    }
    // Projected RhoZ
    if (1)
@@ -282,6 +316,10 @@ void createScenesAndViews()
        mngRhoZGeo->ImportElements(b1, pgeoScene);
        mngRhoZGeo->ImportElements(getExtract("VSDGeo"), pgeoScene);
        doFishEyeDistortion(mngRhoZGeo, 0.8);
+
+       // Use the geometry manager: it has the same projection as mngRhoZ, but
+       // its contents, and so the range of the ticks, do not change per event.
+       axisRhoZ = addProjectionAxis(mngRhoZGeo, rhoZView, "RhoZ");
    }
       // collections
    gEve->SpawnNewScene("Collections", "Collections");
@@ -320,6 +358,8 @@ void evd_run(VsdProvider *prov)
    collectionMng->m_mngRPhi = mngRPhi;
    collectionMng->m_mngRhoZ = mngRhoZ;
    collectionMng->m_mngRhoZGeo = mngRhoZGeo;
+   collectionMng->m_axisRPhi = axisRPhi;
+   collectionMng->m_axisRhoZ = axisRhoZ;
 
    auto eventMng = new EventManager(collectionMng, prov);
    TClass::GetClass("EventManager", true);

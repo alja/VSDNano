@@ -12,6 +12,7 @@
 
 #include "ROOT/REveCaloData.hxx"
 #include "ROOT/REveCalo.hxx"
+#include "ROOT/REveProjectionAxis.hxx"
 
 
 
@@ -33,6 +34,9 @@ public:
     ROOT::Experimental::REveProjectionManager* m_mngRhoZ;
     ROOT::Experimental::REveProjectionManager* m_mngRhoZGeo;
     ROOT::Experimental::REveProjectionManager* m_mngRPhi;
+    // Scales of the projected views; their ticks must be rebuilt when a projection changes.
+    ROOT::Experimental::REveProjectionAxis* m_axisRPhi{nullptr};
+    ROOT::Experimental::REveProjectionAxis* m_axisRhoZ{nullptr};
     ROOT::Experimental::REveViewContext* m_viewContext;
     ROOT::Experimental::REveCaloDataHist* m_caloData;
 
