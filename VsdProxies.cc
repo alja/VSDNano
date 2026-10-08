@@ -133,7 +133,15 @@ void VertexProxyBuilder::BuildItem(const VsdVertex &iData, int iIndex, ROOT::Exp
       ps->SetMarkerSize(markerSize);
       SetupAddElement(ps, iItemHolder );
 
-      if (drawEllipse)
+      // An all-zero error matrix means the file has no vertex errors (e.g. from
+      // NanoAOD): there is no ellipsoid to draw, and nothing to report.
+      bool hasErrors = false;
+      for (int i = 0; i < 3; i++)
+         for (int j = 0; j < 3; j++)
+            if (iData.m_error[i][j] != 0)
+               hasErrors = true;
+
+      if (drawEllipse && hasErrors)
       {
          TMatrixDSym symMtx(3);
          for (int i = 0; i < 3; i++)
@@ -144,7 +152,10 @@ void VertexProxyBuilder::BuildItem(const VsdVertex &iData, int iIndex, ROOT::Exp
             }
          // symMtx.Print();
 
-         TMatrixDEigen mtx(symMtx);
+         // The error matrix is symmetric: TMatrixDSymEigen gives real eigenvalues
+         // and orthogonal eigenvectors, where the general TMatrixDEigen can fail to
+         // converge ("MakeSchurr: too many iterations").
+         TMatrixDSymEigen mtx(symMtx);
 
          TVectorD eigValsVec(mtx.GetEigenValues());
          if (eigValsVec.Min() <= 0)

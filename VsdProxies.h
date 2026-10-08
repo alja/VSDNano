@@ -39,8 +39,8 @@
 #include "TGeoBBox.h"
 #include "TGeoTube.h"
 #include "TGeoSphere.h"
-#include "TMatrixDEigen.h"
 #include "TMatrixDSym.h"
+#include "TMatrixDSymEigen.h"
 
 //====================================================================================
 
