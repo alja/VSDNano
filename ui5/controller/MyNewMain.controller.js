@@ -2,8 +2,9 @@ sap.ui.define(['rootui5/eve7/controller/Main.controller',
                'rootui5/eve7/lib/EveManager',
                "sap/ui/core/mvc/XMLView",
                'sap/ui/core/Fragment',
-               'sap/m/MenuItem'
-], function(MainController, EveManager, XMLView, Fragment, MenuItem) {
+               'sap/m/MenuItem',
+               'rootui5/eve7/lib/GlViewerRCore'
+], function(MainController, EveManager, XMLView, Fragment, MenuItem, GlViewerRCore) {
    "use strict";
 
    return MainController.extend("custom.MyNewMain", {
@@ -29,6 +30,20 @@ let pthis = this;
          }
           
          elem.setHtmlText(title);
+
+         // GL viewers take RQ_LineScale from the URL (default 1) and apply it in bootstrap();
+         // without a URL value, use the input's current value instead (also for views opened later);
+         // an explicit URL value wins and is shown in the input
+         let url_scale = new URLSearchParams(window.location.search).get("RQ_LineScale");
+         if (url_scale) {
+            this.byId("lineScaleInput").setValue(url_scale);
+         } else {
+            let orig_bootstrap = GlViewerRCore.prototype.bootstrap;
+            GlViewerRCore.prototype.bootstrap = function () {
+               this.RQ_LineScale = parseFloat(pthis.byId("lineScaleInput").getValue()) || 1;
+               return orig_bootstrap.apply(this, arguments);
+            };
+         }
       },
 
       onEveManagerInit: function() {
@@ -84,9 +99,17 @@ let pthis = this;
 
          if (staged.length === 1) {
             let eveView = staged[0];
-            let t = eveView.ca.byId("tbar");
-            t.getContent()[2].setEnabled(false);
+            this.getSwapButton(eveView.ca).setEnabled(false);
          }
+      },
+
+      // the base class picks the swap button by fixed index (getContent()[2]), which breaks once GLTransformPatch adds its button in front of it; look it up by its tooltip instead
+      getSwapButton: function (va) {
+         return va.byId("tbar").getContent().find(c => c.getTooltip?.() === "swap");
+      },
+
+      setToolbarSwapIcon: function (va, iName) {
+         this.getSwapButton(va)?.setIcon("sap-icon://" + iName);
       },
 
       showFWLog: function () {
@@ -233,6 +256,25 @@ let pthis = this;
          console.log("playdelay ", oEvent.getParameter("value"));
          let pd_milisec = oEvent.getParameter("value") * 1000;
          this.mgr.SendMIR("playdelay(" + pd_milisec + ")", this.fw2gui.fElementId, "EventManager");
+      },
+
+      setLineScale: function (scale) {
+         for (let ctrl of this.mgr.gl_controllers) {
+            let v = ctrl.viewer;
+            if (!v?.creator || v.RQ_Mode == "Direct") continue;   // Direct mode never sets the factors
+            v.RQ_LineScale = scale;
+            v.creator.SetupPointLineFacs(v.RQ_SSAA,
+                                         v.RQ_MarkerScale * v.canvas.pixelRatio,
+                                         v.RQ_LineScale   * v.canvas.pixelRatio);
+         }
+         // rebuild the current event so its tracks pick up the new width
+         this.mgr.SendMIR("GotoEvent(" + this.byId("gotoEventInput").getValue() + ")",
+                          this.fw2gui.fElementId, "EventManager");
+      },
+
+      onLineScaleChange: function (oEvent) {
+         let s = parseFloat(oEvent.getParameter("value"));
+         if (s > 0) this.setLineScale(s);
       },
 
       /*   onProjectionSubmit: function (oEvent) {

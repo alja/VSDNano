@@ -110,7 +110,7 @@ sap.ui.define([
       let t = makeTransformControls(ctrl, kind);
 
       let infoBtn = new sap.m.Button({
-         icon: "sap-icon://message-information",
+         icon: "sap-icon://overlay",
          tooltip: "Transform",
          press: function (oEvent)
          {
