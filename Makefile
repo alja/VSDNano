@@ -102,7 +102,7 @@ evd_run: evd_run.cc libVsdDict.so libFWDict.so
 	    -lROOTEve \
 	    $(ROOT_LIBS)
 
-service: service.cc libVsdDict.so libFWDict.so
+serviceVSDNano: service.cc libVsdDict.so libFWDict.so
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPFLAGS) -o $@ \
 	    service.cc \
 	    -L. \
@@ -128,7 +128,7 @@ clean:
 	rm -f FWDict.cc FWDict.o FWDict.pcm libFWDict_rdict.pcm FWDict_rdict.pcm
 	rm -f FWEventManager.o VsdProxies.o
 	rm -f *_dictContent.h *_dictUmbrella.h
-	rm -f service
+	rm -f serviceVSDNano
 	rm -f *.d
 
 

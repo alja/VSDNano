@@ -205,7 +205,7 @@ After cloning, `ls` should show the sources (`Makefile`, `evd_run.cc`, `ui5/`, `
 ```bash
 source /home/viz/universal-format/root-dev/master2/build/bin/thisroot.sh
 which root-config rootcling          # both must come from the ROOT above
-make -j8 all service > build.log 2>&1
+make -j8 all serviceVSDNano > build.log 2>&1
 ```
 
 | File | What it is |
@@ -213,7 +213,7 @@ make -j8 all service > build.log 2>&1
 | `libVsdDict.so` | Dictionary for the VSD data classes (`VsdBase.h`) |
 | `libFWDict.so` | Event manager, collections and proxies for the display |
 | `evd_run` | Standalone event display (the default `make` target) |
-| `service` | Multi-session web service (needs `make service`) |
+| `serviceVSDNano` | Multi-session web service (needs `make serviceVSDNano`) |
 
 Both executables carry an rpath to their own directory and to ROOT's `lib/`. To check the linking:
 
