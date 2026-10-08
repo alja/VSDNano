@@ -108,6 +108,18 @@
           </layoutData>
         </Slider>
 
+        <Label text="LineWidth:" labelFor="lineScaleInput">
+          <layoutData>
+            <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="30px" />
+          </layoutData>
+        </Label>
+        <Input id="lineScaleInput" width="4em" type="Number" textAlign="Center" value="2"
+               tooltip="RQ_LineScale" change="onLineScaleChange">
+          <layoutData>
+            <OverflowToolbarLayoutData priority="Low" shrinkable="true" minWidth="40px" />
+          </layoutData>
+        </Input>
+
             <Label id="dateLabel" />
 
         <ToolbarSpacer  /><Label text="RhoZ Projection Plane Angle" labelFor="projections" />
