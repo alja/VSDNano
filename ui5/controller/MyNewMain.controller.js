@@ -99,9 +99,17 @@ let pthis = this;
 
          if (staged.length === 1) {
             let eveView = staged[0];
-            let t = eveView.ca.byId("tbar");
-            t.getContent()[2].setEnabled(false);
+            this.getSwapButton(eveView.ca).setEnabled(false);
          }
+      },
+
+      // the base class picks the swap button by fixed index (getContent()[2]), which breaks once GLTransformPatch adds its button in front of it; look it up by its tooltip instead
+      getSwapButton: function (va) {
+         return va.byId("tbar").getContent().find(c => c.getTooltip?.() === "swap");
+      },
+
+      setToolbarSwapIcon: function (va, iName) {
+         this.getSwapButton(va)?.setIcon("sap-icon://" + iName);
       },
 
       showFWLog: function () {
