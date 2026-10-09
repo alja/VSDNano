@@ -12,7 +12,7 @@
   - [Write TTree with branches with vector of VSD objects](#write-ttree-with-branches-with-vector-of-vsd-objects)
   - [Run event display through web service](#run-event-display-through-web-service)
 - [Developers information](#developers-information)
-  - [1. Build ROOT from a development branch](#1-build-root-from-a-development-branch)
+  - [1. Build ROOT master](#1-build-root-master)
   - [2. Build VSDNano with that ROOT](#2-build-vsdnano-with-that-root)
   - [3. Generate a sample VSD file with Python](#3-generate-a-sample-vsd-file-with-python)
   - [4. Run evd_run](#4-run-evd_run)
@@ -121,9 +121,9 @@ https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
 # Developers information
 
-To change the VSD structures or their graphic representation, you need a recent ROOT master (or a development branch of it) built with REve. The steps below build ROOT, build VSDNano against it, make a sample VSD file with `UserVsd.py`, and view it with `evd_run`. They were run on vocms0102 as user `viz` in September 2026, on EL9 with the system gcc 11.5, cmake 3.31, git and cvmfs. Change the paths to match your own area.
+To change the VSD structures or their graphic representation, you need ROOT master from [root-project/root](https://github.com/root-project/root), from 2 October 2026 (commit `a58fd7d4206`) or later, built with REve. Older ROOT lacks `REveProjectionAxis`, which the RPhi and RhoZ views use. The steps below build ROOT, build VSDNano against it, make a sample VSD file with `UserVsd.py`, and view it with `evd_run`. They were run on vocms0102 as user `viz` in September 2026, on EL9 with the system gcc 11.5, cmake 3.31, git and cvmfs. Change the paths to match your own area.
 
-## 1. Build ROOT from a development branch
+## 1. Build ROOT master
 
 ROOT is built with plain cmake and Makefiles and used straight from its build directory; no install is needed.
 
@@ -132,11 +132,11 @@ ROOT is built with plain cmake and Makefiles and used straight from its build di
 ```bash
 export TOP=/home/viz/universal-format/root-dev/master2   # any empty directory
 mkdir -p $TOP && cd $TOP
-git clone -b rhoz-axis+geo-check-master https://github.com/alja/root.git root
+git clone -b master https://github.com/root-project/root.git root
 mkdir build
 ```
 
-`$TOP/root` holds the source and `$TOP/build` the build tree. Replace the branch with the one you need.
+`$TOP/root` holds the source and `$TOP/build` the build tree. To update an existing checkout, run `git -C $TOP/root pull`, rebuild ROOT, and then rebuild VSDNano with `make clean && make`.
 
 ### Configure
 
