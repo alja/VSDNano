@@ -204,6 +204,11 @@ let pthis = this;
          this.byId("Summary").getController().toggleEditor();
       },
 
+      onPressSettings: function(oEvent)
+      {
+         this.byId("settingsPopover").openBy(oEvent.getSource());
+      },
+
       onPressInvMass: function(oEvent)
       {
 			var oButton = oEvent.getSource(),

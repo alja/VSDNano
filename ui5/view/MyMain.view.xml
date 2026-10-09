@@ -4,13 +4,38 @@
           xmlns:mvc="sap.ui.core.mvc"
           xmlns:l="sap.ui.layout"
           xmlns:commons="sap.ui.commons">
-   <Page title="EVE-7" showNavButton="false" showFooter="false" enableScrolling="false"
+   <!-- titleAlignment="Center" keeps Run/Lumi/Event (the header's contentMiddle) in the
+        middle of the bar; with the theme default it sits right after the left buttons.
+        It must be set here: the Page copies its value onto the header bar. -->
+   <Page title="EVE-7" showNavButton="false" showFooter="false" enableScrolling="false" titleAlignment="Center"
          showHeader="true"
          showSubHeader="true" class="sapUiSizeCompact" id="CanvasMainPage">
+     <dependents>
+       <!-- Opened by the Settings button. Declared here, not loaded lazily, because
+            the controller reads lineScaleInput and projections before the popover is shown. -->
+       <Popover id="settingsPopover" title="Settings" placement="Bottom"
+                class="sapUiResponsivePadding--header">
+         <VBox class="sapUiSmallMargin">
+           <HBox alignItems="Center">
+             <Label text="Line width:" labelFor="lineScaleInput" width="13em"/>
+             <Input id="lineScaleInput" width="5em" type="Number" textAlign="Center" value="2"
+                    tooltip="RQ_LineScale" change="onLineScaleChange"/>
+           </HBox>
+           <HBox alignItems="Center" class="sapUiTinyMarginTop">
+             <Label text="RhoZ projection plane angle:" labelFor="projections" width="13em"/>
+             <Button icon="sap-icon://less" press="onProjectionStepDown" tooltip="Decrease by 1"/>
+             <Input id="projections" value="0" type="Number" width="5em" textAlign="Center"
+                    change="onProjectionSubmit"/>
+             <Button icon="sap-icon://add" press="onProjectionStepUp" tooltip="Increase by 1"/>
+           </HBox>
+         </VBox>
+       </Popover>
+     </dependents>
      <customHeader>
        <Bar id="otb1" >
          <contentLeft>
-            <MenuButton text="File"  enabled="false">
+            <!-- File menu hidden; set visible="true" to bring it back -->
+            <MenuButton text="File"  enabled="false" visible="false">
                <menu>
                   <Menu itemSelected="onFileMenuAction">
                      <items>
@@ -50,6 +75,8 @@
                 </Menu>
               </menu>
             </MenuButton>
+          <Button id="settingsBtn" text="Settings" icon="sap-icon://action-settings" type="Transparent"
+               tooltip="Display settings" press="onPressSettings"/>
           <Button id="invMassBtn" text="InvMassDialog" type="Transparent"
                tooltip="Toggle GED editor" press="onPressInvMass"/>
          </contentLeft>
@@ -63,7 +90,8 @@
             <Input id="lumiInput" width="7em"  class="sapUiTinyMargin" enabled="false"/>
             <Label id="event" text="Event "/>
             <Input id="eventInput" width="7em" class="sapUiTinyMargin" enabled="false"/>
-                <FormattedText id="centerTitle" htmlText="Universal Format"/>
+                <!-- title hidden so Run/Lumi/Event sit in the centre; set visible="true" to show it -->
+                <FormattedText id="centerTitle" htmlText="Universal Format" visible="false"/>
          </contentMiddle>
          <contentRight>
           <Button id="logButton"
@@ -72,91 +100,32 @@
         </Bar>
      </customHeader>
      <subHeader>
-        <OverflowToolbar id="otb2">
-          <Text text="Navigate events: " />
+        <!-- A Bar, like the header, so GoToEvent (contentMiddle) sits in the middle,
+             under Run/Lumi/Event. The Page sets titleAlignment only on the header,
+             so the subheader needs its own. -->
+        <Bar id="otb2" titleAlignment="Center">
+          <contentLeft>
+            <Text text="Navigate events: " />
+            <Button id="prevEvent" icon="sap-icon://media-reverse" press="prevEvent" />
+            <Button id="nextEvent" icon="sap-icon://media-play" press="nextEvent" />
 
-           <Button id="prevEvent" icon="sap-icon://media-reverse"
-                   press="prevEvent" />
-           <Button id="nextEvent" icon="sap-icon://media-play" 
-                   press="nextEvent" />
-
-        <Label text="GoToEvent:" labelFor="gotoEventInput">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="30px" />
-          </layoutData>
-        </Label>
-        <Input id="gotoEventInput" width="5em" type="Number" textAlign="Center" value="0"
-               tooltip="Go to event by index" change="onGotoEventSubmit">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Low" shrinkable="true" minWidth="50px" />
-          </layoutData>
-        </Input>
-        <Label text="AutoPlay:">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="40px" />
-          </layoutData>
-        </Label>       
-        <CheckBox id="autoplayId" class="sapUiNoMarginRight" select="autoplay">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Low" shrinkable="true" minWidth="40px" />
-          </layoutData>
-        </CheckBox>
-
-        <Slider id="playdelayId" value="1" min="1" max="10" width="6em" change="playdelay" showAdvancedTooltip="true" class="sapUiNoMargin">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="40px" />
-          </layoutData>
-        </Slider>
-
-        <Label text="LineWidth:" labelFor="lineScaleInput">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Disappear" shrinkable="true" minWidth="30px" />
-          </layoutData>
-        </Label>
-        <Input id="lineScaleInput" width="4em" type="Number" textAlign="Center" value="2"
-               tooltip="RQ_LineScale" change="onLineScaleChange">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Low" shrinkable="true" minWidth="40px" />
-          </layoutData>
-        </Input>
+            <!-- AutoPlay controls hidden; set visible="true" on the three controls to bring them back -->
+            <Label text="AutoPlay:" visible="false" />
+            <CheckBox id="autoplayId" class="sapUiNoMarginRight" select="autoplay" visible="false" />
+            <Slider id="playdelayId" visible="false" value="1" min="1" max="10" width="6em" change="playdelay" showAdvancedTooltip="true" class="sapUiNoMargin" />
 
             <Label id="dateLabel" />
-
-        <ToolbarSpacer  /><Label text="RhoZ Projection Plane Angle" labelFor="projections" />
-   <HBox alignItems="Center">
-    <Button
-        icon="sap-icon://less"
-        press="onProjectionStepDown"
-        tooltip="Decrease by 1" />
-
-    <Input
-        id="projections"
-        value="0"
-        type="Number"
-        width="5em"
-        textAlign="Center"
-        change="onProjectionSubmit" />
-
-    <Button
-        icon="sap-icon://add"
-        press="onProjectionStepUp"
-        tooltip="Increase by 1" />
-</HBox>
-  
-        <!-- contentRight Data Info -->
-        <ToolbarSpacer />
-        <Label id="fileName" text="__________________________________" textAlign="End">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Low" shrinkable="true" minWidth="300px" maxWidth="300px"/>
-          </layoutData>
-        </Label>
-        <Label id="fileNav" text="[__/____]">
-          <layoutData>
-            <OverflowToolbarLayoutData priority="Low" shrinkable="true" minWidth="60px"/>
-          </layoutData>
-        </Label>
-
-         </OverflowToolbar>
+          </contentLeft>
+          <contentMiddle>
+            <Label text="GoToEvent:" labelFor="gotoEventInput" />
+            <Input id="gotoEventInput" width="5em" type="Number" textAlign="Center" value="0"
+                   tooltip="Go to event by index" change="onGotoEventSubmit" />
+          </contentMiddle>
+          <contentRight>
+            <Label id="fileName" text="__________________________________" textAlign="End" />
+            <Label id="fileNav" text="[__/____]" />
+          </contentRight>
+        </Bar>
       </subHeader>
       <content>
         <l:Splitter orientation="Horizontal" id="MainAreaSplitter">

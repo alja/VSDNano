@@ -342,7 +342,7 @@ void evd_run(VsdProvider *prov)
 
    ROOT::RWebWindowsManager::SetLoopbackMode(false);
    ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false);
-   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("11.0");
+   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("12.0");
 
    std::string locPath = "ui5";
    gEve->AddLocation("unidir/", locPath);
