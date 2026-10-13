@@ -116,10 +116,9 @@ void EventManager::GotoEvent(int id)
 
 void EventManager::UpdateTitle()
 {
-    // printf("======= update title %lld/%lld event ifnfo run=[%d], lumi=[%d], event = [%lld]\n", m_event->GetEventIdx(), m_event->GetNumEvents(),
-    //      m_event->m_eventInfo.lumi(), m_event->m_eventInfo.run(), m_event->m_eventInfo.event());
     FWEventId eid = m_event->GetEventId();
-    SetTitle(Form("%lld/%lld/%d/%d/%lld", m_event->GetEventIdx(), m_event->GetNumEvents(), eid.m_lumi, eid.m_run, eid.m_event));
+    // the GUI (MyNewMain.controller.js showEventInfo) reads idx/nevents/run/lumi/event
+    SetTitle(Form("%lld/%lld/%d/%d/%lld", m_event->GetEventIdx(), m_event->GetNumEvents(), eid.m_run, eid.m_lumi, eid.m_event));
     SetName(m_event->GetTitle().c_str()); // provider title is usually the file name
     StampObjProps();
 }
