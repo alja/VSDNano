@@ -1,5 +1,5 @@
 #include "TApplication.h"
-#include "VsdProvider.h"
+#include "FWProvider.h"
 ////////////////////////////////////////////////////#include "TApplication.h"
 #include "TKey.h"
 #include "TEnv.h"
@@ -39,6 +39,9 @@ ROOT::Experimental::REveProjectionAxis* axisRPhi;
 ROOT::Experimental::REveProjectionAxis* axisRhoZ;
 ROOT::Experimental::REveViewContext* viewContext;
 ROOT::Experimental::REveCaloDataHist* caloData;
+
+// directory with ui5/ and data/, so the event display can run from elsewhere
+std::string g_evdBaseDir = ".";
 
 ////////////////////////////////////////////////////
 
@@ -133,8 +136,8 @@ REveProjectionAxis *addProjectionAxis(REveProjectionManager *mng, REveViewer *vi
 
 REveGeoShape* getExtract(const char* extract_name)
 {
-   const char *file = "data/cms_extract.root";
-   auto f = TFile::Open(file);
+   std::string file = g_evdBaseDir + "/data/cms_extract.root";
+   auto f = TFile::Open(file.c_str());
 
    TIter next(f->GetListOfKeys());
    TKey *key = nullptr;
@@ -166,7 +169,7 @@ REveGeoShape* getExtract(const char* extract_name)
 //==============================================================================
 //== init scenes and views  =============================================================
 //==============================================================================
-void createScenesAndViews()
+void createScenesAndViews(FWProvider *prov)
 {
    //view context
    float r = 139.5;
@@ -185,34 +188,7 @@ void createScenesAndViews()
 
    // table specs
    auto tableInfo = new REveTableViewInfo();
-   tableInfo->table("VsdVertex").
-      column("x",  1, "i.x()").
-      column("y",  1, "i.y()").
-      column("z",  1, "i.z()");
-
-   tableInfo->table("VsdCandidate").
-      column("pt",  1, "i.pt()").
-      column("eta", 3, "i.eta()").
-      column("phi", 3, "i.phi()").
-      column("charge", 3, "i.charge()").
-      column("pdgId", 0, "i.pdgId()");
-
-   tableInfo->table("VsdElectron").
-      column("pt",  1, "i.pt()").
-      column("eta", 3, "i.eta()").
-      column("phi", 3, "i.phi()").
-      column("HoE", 3, "i.hadronicOverEm()");
-
-   tableInfo->table("VsdMET").
-      column("pt",  1, "i.pt()").
-      column("sumEt", 3, "i.sumEt()").
-      column("phi", 3, "i.phi()");
-
-   tableInfo->table("VsdJet").
-      column("pt",  1, "i.pt()").
-      column("eta", 3, "i.eta()").
-      column("phi", 3, "i.phi()").
-      column("hadFraction", 3, "i.hadFraction()");
+   prov->SetupTables(tableInfo);
 
    viewContext->SetTableViewInfo(tableInfo);
 
@@ -335,8 +311,10 @@ void createScenesAndViews()
     //((REveViewer*)(gEve->GetViewers()->FirstChild()))->SetMandatory(false);
 }
 
-void evd_run(VsdProvider *prov)
+void evd_run(FWProvider *prov, const std::string &baseDir = ".")
 {
+   g_evdBaseDir = baseDir;
+
    auto eveMng = REveManager::Create();
    gEve->AllowMultipleRemoteConnections(false, false);
 
@@ -344,12 +322,12 @@ void evd_run(VsdProvider *prov)
    ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false);
    ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("12.0");
 
-   std::string locPath = "ui5";
+   std::string locPath = g_evdBaseDir + "/ui5";
    gEve->AddLocation("unidir/", locPath);
    gEve->SetDefaultHtmlPage("file:unidir/eventDisplay.html");
 
    // printElements(gEve->GetWorld(), true);
-   createScenesAndViews();
+   createScenesAndViews(prov);
    // printElements(gEve->GetWorld(), true);
 
    auto collectionMng = new CollectionManager(prov);
@@ -366,7 +344,7 @@ void evd_run(VsdProvider *prov)
    gEve->GetWorld()->AddElement(eventMng);
 
    eventMng->UpdateTitle();
-   eventMng->SetName(prov->m_title.c_str());
+   eventMng->SetName(prov->GetTitle().c_str());
 
    auto massDialog = new InvMassDialog();
    eventMng->AddElement(massDialog);
@@ -375,12 +353,9 @@ void evd_run(VsdProvider *prov)
    gEve->GetSelection()->SetDeviator(deviator);
    gEve->GetHighlight()->SetDeviator(deviator);
 
-   for (auto &vsdc : prov->m_collections)
+   for (auto &spec : prov->GetCollectionSpecs())
    {
-      if (vsdc->m_purpose == "EventInfo")
-         continue;
-
-      collectionMng->addCollection(vsdc);
+      collectionMng->addCollection(spec);
    }
 
    eventMng->GotoEvent(0);

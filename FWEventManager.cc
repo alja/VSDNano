@@ -1,6 +1,6 @@
 #include <iostream>
 #include "FWEventManager.h"
-#include "VsdProvider.h"
+#include "FWProvider.h"
 #include "FWCollectionManager.h"
 
 #include <ROOT/REveManager.hxx>
@@ -89,13 +89,13 @@ void EventManager::autoplay_scheduler()
 void EventManager::PreviousEvent()
 {
     int id;
-    if (m_event->m_eventIdx == 0)
+    if (m_event->GetEventIdx() == 0)
     {
         id = m_event->GetNumEvents() - 1;
     }
     else
     {
-        id = m_event->m_eventIdx - 1;
+        id = m_event->GetEventIdx() - 1;
     }
 
     printf("going to previous %d \n", id);
@@ -110,22 +110,23 @@ void EventManager::GotoEvent(int id)
     // caloData->DataChanged();
 
     // Restore RhoZ plane angle was last set for this event. default for 0
-    auto it = m_planeAngleByEvent.find(m_event->m_eventIdx);
+    auto it = m_planeAngleByEvent.find(m_event->GetEventIdx());
     setPlaneRotation(it != m_planeAngleByEvent.end() ? it->second : 0.f, true);
 }
 
 void EventManager::UpdateTitle()
 {
-    // printf("======= update title %lld/%lld event ifnfo run=[%d], lumi=[%d], event = [%lld]\n", m_event->m_eventIdx, m_event->GetNumEvents(),
+    // printf("======= update title %lld/%lld event ifnfo run=[%d], lumi=[%d], event = [%lld]\n", m_event->GetEventIdx(), m_event->GetNumEvents(),
     //      m_event->m_eventInfo.lumi(), m_event->m_eventInfo.run(), m_event->m_eventInfo.event());
-    SetTitle(Form("%lld/%lld/%d/%d/%lld", m_event->m_eventIdx, m_event->GetNumEvents(), m_event->m_eventInfo.lumi(), m_event->m_eventInfo.run(), m_event->m_eventInfo.event()));
-    SetName(m_event->m_title); // VSD provider stores file name in title
+    FWEventId eid = m_event->GetEventId();
+    SetTitle(Form("%lld/%lld/%d/%d/%lld", m_event->GetEventIdx(), m_event->GetNumEvents(), eid.m_lumi, eid.m_run, eid.m_event));
+    SetName(m_event->GetTitle().c_str()); // provider title is usually the file name
     StampObjProps();
 }
 
 void EventManager::NextEvent()
 {
-    int id = m_event->m_eventIdx + 1;
+    int id = m_event->GetEventIdx() + 1;
     if (id == m_event->GetNumEvents())
     {
         printf("NextEvent: reached last %lld\n", m_event->GetNumEvents());
@@ -186,7 +187,7 @@ void EventManager::setPlaneRotation(float angle, bool project)
 
     RotateLineAxis(angle);
     m_planeAngle = angle;
-    m_planeAngleByEvent[m_event->m_eventIdx] = angle;
+    m_planeAngleByEvent[m_event->GetEventIdx()] = angle;
     StampObjProps();
 
     if (project) m_collectionMng->m_mngRhoZ->ProjectChildren();

@@ -32,7 +32,8 @@ int main(int argc, char **argv)
       return 1;
    }
 
-   const char *dummyArgvArray[] = {argv[0]};
+   // TApplication writes argv[argc] = nullptr, so leave room for the terminator
+   const char *dummyArgvArray[] = {argv[0], nullptr};
    char **dummyArgv = const_cast<char **>(dummyArgvArray);
 
    int dummyArgc = 1;

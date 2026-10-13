@@ -13,6 +13,7 @@
 #include <ROOT/RFileDialog.hxx>
 #include "nlohmann/json.hpp"
 
+#include "VsdProvider.h"
 #include "evd_main.cc"
 
 #include <cstdio>

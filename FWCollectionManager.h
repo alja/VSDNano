@@ -3,7 +3,7 @@
 
 #include "VsdProxies.h"
 
-#include "VsdProvider.h"
+#include "FWProvider.h"
 
 #include "FWDataCollection.h"
 #include "ROOT/REveDataCollection.hxx"
@@ -22,7 +22,7 @@
 class CollectionManager
 {
 private:
-    VsdProvider *m_event{nullptr};
+    FWProvider *m_event{nullptr};
     ROOT::Experimental::REveElement *m_collections{nullptr};
 
 
@@ -40,7 +40,7 @@ public:
     ROOT::Experimental::REveViewContext* m_viewContext;
     ROOT::Experimental::REveCaloDataHist* m_caloData;
 
-    CollectionManager(VsdProvider *event) : m_event(event)
+    CollectionManager(FWProvider *event) : m_event(event)
     {
         m_collections = ROOT::Experimental::gEve->GetScenes()->FindChild("Collections");
     }
@@ -49,14 +49,13 @@ public:
     {
         m_isEventLoading = true;
         rdc->ClearItems();
-        VsdCollection *vsdc = m_event->RefColl(rdc->GetName());
-        std::string cname = rdc->GetName();
-        // printf("-------- LoadCurrentEventInCollection %s size %lu\n", rdc->GetCName(), vsdc->m_list.size());
+        std::vector<void *> items;
+        m_event->GetItems(rdc->GetName(), items);
+        // printf("-------- LoadCurrentEventInCollection %s size %lu\n", rdc->GetCName(), items.size());
         std::string t = "dummy";
-        for (auto vsd : vsdc->m_list)
+        for (auto item : items)
         {
-            // printf ("add item tp ROOT::Experimental::REveColl\n"); vsd->dump();
-            rdc->AddItem(vsd, t, t);
+            rdc->AddItem(item, t, t);
         }
         rdc->ApplyFilter();
         rdc->GetItemList()->StampObjProps();
@@ -79,78 +78,74 @@ public:
         m_caloData->DataChanged();
     }
 
-    ROOT::Experimental::REveDataProxyBuilderBase *getProxyBuilderFromVSD(VsdCollection *vsdc)
+    ROOT::Experimental::REveDataProxyBuilderBase *getProxyBuilder(const FWCollectionSpec &spec)
     {
+        if (spec.m_proxyBuilder.empty())
+            return nullptr;
+
         // AMT: this is not necessary if ROOT::Experimental::REveCaloData is in globalscope
-        if (vsdc->m_purpose == "CaloTower")
+        if (spec.m_proxyBuilder == "CaloTowerProxyBuilder")
             return new CaloTowerProxyBuilder(m_caloData);
 
-        // amt alternative way
-        std::string pbn = vsdc->m_purpose + "ProxyBuilder";
-        TClass* pbc = TClass::GetClass(pbn.c_str());
+        TClass* pbc = TClass::GetClass(spec.m_proxyBuilder.c_str());
         if (pbc)
            return (ROOT::Experimental::REveDataProxyBuilderBase*)pbc->New();
 
-        printf("can't find proxy for purpose %s \n", vsdc->m_purpose.c_str());
+        printf("can't find proxy builder %s for collection %s\n", spec.m_proxyBuilder.c_str(), spec.m_name.c_str());
         return nullptr;
     }
 
     void
-    addCollection(VsdCollection *vsdc)
+    addCollection(const FWCollectionSpec &spec)
     {
-        FWDataCollection *collection = new FWDataCollection(vsdc->m_name, vsdc->m_varConfig);
+        FWDataCollection *collection = new FWDataCollection(spec.m_name, spec.m_varConfig);
         m_collections->AddElement(collection);
-        std::string class_name = "Vsd" + vsdc->m_type; // !!! This works beacuse it is a root macro
 
-        // std::cout << "addCollection class name " << class_name << "\n";
+        TClass* tc  = TClass::GetClass(spec.m_itemClass.c_str());
+        if (!tc)
+            throw( std::runtime_error("addCollection " +  spec.m_name + ": no class " + spec.m_itemClass) );
 
-        TClass* tc  = TClass::GetClass(class_name.c_str());
-        if (!tc) {
-            // class_name = "VSD" + vsdc->m_purpose; // !!! This works beacuse it is a root macro
-            class_name = vsdc->m_purpose;
-            tc  = TClass::GetClass(class_name.c_str());
-            if (!tc)
-            throw( std::runtime_error("addCollection " +  vsdc->m_name ) );
-        }
+        collection->SetItemClass(tc);
+        collection->SetMainColor(spec.m_color);
+        collection->SetFilterExpr(spec.m_filter.c_str());
 
-        collection->SetItemClass(TClass::GetClass(class_name.c_str()));
-        collection->SetMainColor(vsdc->m_color);
-        collection->SetFilterExpr(vsdc->m_filter.c_str());
-
-        ROOT::Experimental::REveDataProxyBuilderBase *glBuilder = getProxyBuilderFromVSD(vsdc);
+        ROOT::Experimental::REveDataProxyBuilderBase *glBuilder = getProxyBuilder(spec);
 
         // load data
         LoadCurrentEventInCollection(collection);
-        glBuilder->SetCollection(collection);
-        glBuilder->SetHaveAWindow(true);
-
-        for (auto &scene : ROOT::Experimental::gEve->GetScenes()->RefChildren())
+        if (glBuilder)
         {
+            glBuilder->SetCollection(collection);
+            glBuilder->SetHaveAWindow(true);
 
-            // ROOT::Experimental::ROOT::Experimental::REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
+            for (auto &scene : ROOT::Experimental::gEve->GetScenes()->RefChildren())
+            {
 
-            if (strncmp(scene->GetCName(), "Table", 5) == 0)
-                continue;
-            if (!strncmp(scene->GetCTitle(), "RhoZProjected", 8))
-            {
-                ROOT::Experimental::REveElement *product = glBuilder->CreateProduct("RhoZViewType", m_viewContext);
-                m_mngRhoZ->ImportElements(product, scene);
-                continue;
+                // ROOT::Experimental::ROOT::Experimental::REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
+
+                if (strncmp(scene->GetCName(), "Table", 5) == 0)
+                    continue;
+                if (!strncmp(scene->GetCTitle(), "RhoZProjected", 8))
+                {
+                    ROOT::Experimental::REveElement *product = glBuilder->CreateProduct("RhoZViewType", m_viewContext);
+                    m_mngRhoZ->ImportElements(product, scene);
+                    continue;
+                }
+                if (!strncmp(scene->GetCTitle(), "RPhiProjected", 8))
+                {
+                    ROOT::Experimental::REveElement *product = glBuilder->CreateProduct("RPhiViewType", m_viewContext);
+                    m_mngRPhi->ImportElements(product, scene);
+                    continue;
+                }
+                else if ((!strncmp(scene->GetCName(), "Event scene", 8)))
+                {
+                    ROOT::Experimental::REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
+                    scene->AddElement(product);
+                }
             }
-            if (!strncmp(scene->GetCTitle(), "RPhiProjected", 8))
-            {
-                ROOT::Experimental::REveElement *product = glBuilder->CreateProduct("RPhiViewType", m_viewContext);
-                m_mngRPhi->ImportElements(product, scene);
-                continue;
-            }
-            else if ((!strncmp(scene->GetCName(), "Event scene", 8)))
-            {
-                ROOT::Experimental::REveElement *product = glBuilder->CreateProduct(scene->GetTitle(), m_viewContext);
-                scene->AddElement(product);
-            }
+            m_builders.push_back(glBuilder);
+            glBuilder->Build();
         }
-        m_builders.push_back(glBuilder);
-        glBuilder->Build();
 
         // Tables
         auto tableBuilder = new ROOT::Experimental::REveTableProxyBuilder();

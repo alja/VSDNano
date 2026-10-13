@@ -1,6 +1,7 @@
 #ifndef VsdProvider_h
 #define VsdProvider_h
 #include "VsdBase.h"
+#include "FWProvider.h"
 #include "TClass.h"
 #include "TFile.h"
 #include "TVirtualCollectionProxy.h"
@@ -8,6 +9,7 @@
 #include "TPRegexp.h"
 #include <iostream>
 #include "nlohmann/json.hpp"
+#include <ROOT/REveTableInfo.hxx>
 
 
 inline VsdProvider *g_provider = nullptr;
@@ -33,7 +35,7 @@ struct ColBranchInfo
     ColBranchInfo() = default;
 };
 
-class VsdProvider
+class VsdProvider : public FWProvider
 {
 public:
     TTree *m_vsdTree{nullptr};
@@ -180,7 +182,7 @@ public:
         return nullptr;
     }
 
-    virtual void GotoEvent(int eventIdx)
+    void GotoEvent(int eventIdx) override
     {
         m_eventIdx = eventIdx;
 
@@ -211,7 +213,79 @@ public:
         set_event_info();
     }
 
-    virtual Long64_t GetNumEvents() { return m_vsdTree->GetEntriesFast(); }
+    Long64_t GetNumEvents() override { return m_vsdTree->GetEntriesFast(); }
+
+    //--------------------------------------------------------------------------
+    // FWProvider
+
+    const std::string &GetTitle() const override { return m_title; }
+
+    Long64_t GetEventIdx() const override { return m_eventIdx; }
+
+    FWEventId GetEventId() override
+    {
+        return FWEventId{m_eventInfo.run(), m_eventInfo.lumi(), m_eventInfo.event()};
+    }
+
+    std::vector<FWCollectionSpec> GetCollectionSpecs() override
+    {
+        std::vector<FWCollectionSpec> specs;
+        for (auto vsdc : m_collections)
+        {
+            if (vsdc->m_purpose == "EventInfo")
+                continue;
+
+            FWCollectionSpec s;
+            s.m_name = vsdc->m_name;
+            s.m_itemClass = "Vsd" + vsdc->m_type; // !!! This works beacuse it is a root macro
+            if (!TClass::GetClass(s.m_itemClass.c_str()))
+                s.m_itemClass = vsdc->m_purpose;
+            s.m_proxyBuilder = vsdc->m_purpose + "ProxyBuilder";
+            s.m_color = vsdc->m_color;
+            s.m_filter = vsdc->m_filter;
+            s.m_varConfig = vsdc->m_varConfig;
+            specs.push_back(s);
+        }
+        return specs;
+    }
+
+    void GetItems(const std::string &collection, std::vector<void *> &items) override
+    {
+        for (auto vsd : RefColl(collection)->m_list)
+            items.push_back(vsd);
+    }
+
+    void SetupTables(ROOT::Experimental::REveTableViewInfo *tableInfo) override
+    {
+        tableInfo->table("VsdVertex").
+            column("x",  1, "i.x()").
+            column("y",  1, "i.y()").
+            column("z",  1, "i.z()");
+
+        tableInfo->table("VsdCandidate").
+            column("pt",  1, "i.pt()").
+            column("eta", 3, "i.eta()").
+            column("phi", 3, "i.phi()").
+            column("charge", 3, "i.charge()").
+            column("pdgId", 0, "i.pdgId()");
+
+        tableInfo->table("VsdElectron").
+            column("pt",  1, "i.pt()").
+            column("eta", 3, "i.eta()").
+            column("phi", 3, "i.phi()").
+            column("HoE", 3, "i.hadronicOverEm()");
+
+        tableInfo->table("VsdMET").
+            column("pt",  1, "i.pt()").
+            column("sumEt", 3, "i.sumEt()").
+            column("phi", 3, "i.phi()");
+
+        tableInfo->table("VsdJet").
+            column("pt",  1, "i.pt()").
+            column("eta", 3, "i.eta()").
+            column("phi", 3, "i.phi()").
+            column("hadFraction", 3, "i.hadFraction()");
+    }
 };
 
 #endif // VsdProvider_h
