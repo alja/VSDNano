@@ -1,3 +1,19 @@
+#ifndef FWService_h
+#define FWService_h
+
+// Base for the event display services (serviceVSDNano, serviceVSDMama).
+//
+// The service listens on a socket for one-line JSON requests. For a "load"
+// request it forks, and the child runs an event display on the requested data
+// and answers with the port, path and connection key of its web server. The
+// parent keeps track of the children and kills idle ones.
+//
+// A service only says how to create the data provider and how to recognize its
+// data format, by implementing FWService's virtual functions.
+//
+// Like evd_main.cc, which it includes, this file is meant to be included in a
+// single translation unit, the one with main().
+
 #include "TRandom3.h"
 #include "TSystem.h"
 #include "TServerSocket.h"
@@ -13,14 +29,17 @@
 #include <ROOT/RFileDialog.hxx>
 #include "nlohmann/json.hpp"
 
-#include "VsdProvider.h"
+#include "FWProvider.h"
 #include "evd_main.cc"
 
+#include <algorithm>
 #include <cstdio>
 #include <ctime>
+#include <list>
 #include <string>
 #include <regex>
 #include <mutex>
+#include <thread>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -33,7 +52,6 @@
 #include <iostream>
 #include <fstream>
 
-static int SERVICE_PORT = 5555;
 static int MAX_SERVERS = 100;
 static int USER_TIMEOUT = 604800;
 static int DISCONNECT_TIMEOUT = 604800;
@@ -44,10 +62,10 @@ namespace REX = ROOT::Experimental;
 // Message Queue stuff
 //=============================================================================
 
-int N_tot_children = 0;
+static int N_tot_children = 0;
 
-int global_msgq_id;
-pid_t global_child_pid = -1; // set for children after fork
+static int global_msgq_id;
+static pid_t global_child_pid = -1; // set for children after fork
 
 struct fw_msgbuf
 {
@@ -55,7 +73,7 @@ struct fw_msgbuf
    REX::REveServerStatus mbody;
 };
 
-void msgq_test_send(long id, REX::REveServerStatus &rss)
+static void msgq_test_send(long id, REX::REveServerStatus &rss)
 {
    struct fw_msgbuf msg;
    msg.mtype = id;
@@ -104,8 +122,8 @@ struct ChildInfo
    }
 };
 
-std::mutex g_mutex;
-std::map<pid_t, ChildInfo> g_children_map;
+static std::mutex g_mutex;
+static std::map<pid_t, ChildInfo> g_children_map;
 
 static void child_handler(int sig)
 {
@@ -130,7 +148,7 @@ static void child_handler(int sig)
    }
 }
 
-void msgq_receiver_thread_foo()
+static void msgq_receiver_thread_foo()
 {
    while (true)
    {
@@ -171,7 +189,7 @@ void msgq_receiver_thread_foo()
 // Fill out html table report
 //=============================================================================
 
-void html_report(std::ostringstream &oss)
+static void html_report(std::ostringstream &oss)
 {
    std::vector<ChildInfo> v;
    {
@@ -214,7 +232,7 @@ void html_report(std::ostringstream &oss)
 //=============================================================================
 // Returns number of supposedly active processes (assuming sig-kill will work).
 
-int KillIdleProcesses()
+static int KillIdleProcesses()
 {
    // store results in buffer
    std::vector<REX::REveServerStatus> v;
@@ -264,7 +282,7 @@ int KillIdleProcesses()
 // Assert directory exists, presumably logs/ or config/ for current user
 //=============================================================================
 
-int assertDir(const std::string &dir)
+static int assertDir(const std::string &dir)
 {
    bool fail = false;
    struct stat sb;
@@ -305,7 +323,7 @@ int assertDir(const std::string &dir)
 // Generate random string to be used as a sesssion key
 //=============================================================================
 
-std::string RandomString(TRandom &rnd, int len = 16)
+static std::string RandomString(TRandom &rnd, int len = 16)
 {
    std::string s;
    s.resize(len);
@@ -331,7 +349,7 @@ std::string RandomString(TRandom &rnd, int len = 16)
 //=============================================================================
 //=============================================================================
 
-void SendRawString(TSocket *s, const char *msg)
+static void SendRawString(TSocket *s, const char *msg)
 {
    s->SendRaw(msg, strlen(msg));
 }
@@ -339,8 +357,8 @@ void SendRawString(TSocket *s, const char *msg)
 //=============================================================================
 //=============================================================================
 
-bool ACCEPT_NEW = true;
-int  CHILDREN_MAX_WAIT = 0;
+static bool ACCEPT_NEW = true;
+static int  CHILDREN_MAX_WAIT = 0;
 
 static void int_handler(int sig)
 {
@@ -348,7 +366,45 @@ static void int_handler(int sig)
    ACCEPT_NEW = false;
 }
 
-void revetor()
+//=============================================================================
+// FWService
+//=============================================================================
+
+class FWService
+{
+public:
+   FWService(const std::string &name, int port) : m_name(name), m_port(port) {}
+   virtual ~FWService() {}
+
+   // Parse the command line and run the service.
+   int Main(int argc, char *argv[]);
+
+protected:
+   std::string m_name; // shown in the help text and the log
+   int         m_port; // service port, can be changed with --port
+
+   // Called in the service process before it starts listening.
+   virtual void LoadLibraries() {}
+
+   // Answer to a "dataformat" request: the format of the file, or "invalid".
+   // The file is null if it could not be opened.
+   virtual std::string DataFormat(TFile *file) = 0;
+
+   // Called in the forked child for a "load" request. Return the provider for
+   // the requested data, or null and a message in error, which is sent back
+   // to the client.
+   virtual FWProvider *CreateProvider(const nlohmann::json &req, std::string &error) = 0;
+
+   // Directory with ui5/ and data/ for evd_run().
+   virtual std::string EvdBaseDir() { return "."; }
+
+private:
+   void Run();
+};
+
+//------------------------------------------------------------------------------
+
+void FWService::Run()
 {
    namespace REX = ROOT::Experimental;
 
@@ -367,19 +423,15 @@ void revetor()
    // also do REveManager::Create() here.
    TApplication app("REveService", 0, 0);
 
-   gSystem->Load("libVsdDict.so");
-   gSystem->Load("libFWDict.so");
-   //auto *ff = TFile::Open("/home/viz/universal-format/samples//UserVsd-0.root");
-   //ff->Close();
-   //delete ff;
+   LoadLibraries();
 
-   TServerSocket *ss = new TServerSocket(SERVICE_PORT, kTRUE);
+   TServerSocket *ss = new TServerSocket(m_port, kTRUE);
    if (!ss->IsValid())
    {
       fprintf(stderr, "Failed creating TServerSocket with code %d\n", ss->GetErrorCode());
       exit(1);
    }
-   printf("Server socket created on port %d, listening ...\n", SERVICE_PORT);
+   printf("%s: server socket created on port %d, listening ...\n", m_name.c_str(), m_port);
 
    // Message queue for child status report
    if ((global_msgq_id = msgget(IPC_PRIVATE, IPC_CREAT | 0660)) == -1)
@@ -535,21 +587,11 @@ void revetor()
                // Close the server socket.
                ss->Close();
 
-               // test
                std::string dataPath = req["file"].get<std::string>();
                TFile::SetReadStreamerInfo(false);
                TFile* file = TFile::Open(dataPath.c_str());
 
-               std::string format = "edm";
-               if (file == nullptr)
-               {
-                  format = "invalid";
-               }
-               else {
-                  TObject* x =  file->Get("VSD");
-                  if (x)
-                     format = "vsd";
-               }
+               std::string format = DataFormat(file);
 
                char pmsg[1024];
                snprintf(pmsg, 1024, "{ 'format'=>'%s' }\n", format.c_str());
@@ -578,7 +620,7 @@ void revetor()
             }
 
             ++N_tot_children;
-            
+
             std::string logdir = req["logdir"].get<std::string>();
             std::string logdirurl = req["logdirurl"].get<std::string>();
             {
@@ -593,22 +635,6 @@ void revetor()
                   continue;
                }
             }
-/*
-            std::string fwconfig = req["fwconfig"].get<std::string>();
-            std::cout << "fwconfig is set !!!! \n";
-            std::string fwconfigdir = req["fwconfigdir"].get<std::string>();
-            {
-               bool cfg_fail = assertDir(fwconfigdir);
-               if (cfg_fail)
-               {
-                  char pmsg[1024];
-                  snprintf(pmsg, 1024, "{ 'error'=>'Failure creating config file/directory. This is a service misconfiguration.' }\n");
-                  SendRawString(s, pmsg);
-                  s->Close();
-                  delete s;
-                  continue;
-               }
-            }*/
 
             time_t epoch = time(0);
             struct tm t;
@@ -622,7 +648,7 @@ void revetor()
                delete s;
 
                char log_fname[128];
-               snprintf(log_fname, 1024, "%d%02d%02d-%02d%02d%02d-%d.log",
+               snprintf(log_fname, sizeof(log_fname), "%d%02d%02d-%02d%02d%02d-%d.log",
                         1900 + t.tm_year, 1 + t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec,
                         pid);
                logdir += "/";
@@ -659,15 +685,13 @@ void revetor()
                fclose(stderr);
 
                global_child_pid = getpid();
- 
+
                char log_fname[128];
                snprintf(log_fname, 128, "%d%02d%02d-%02d%02d%02d-%d.log",
                         1900 + t.tm_year, 1 + t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec,
                         global_child_pid);
                logdir += "/";
                logdir += log_fname;
-
-               std::cout << "AMT debug ....logdir = " <<  logdir << "\n";
 
                if ((stdout = fopen(logdir.c_str(), "w")) == nullptr)
                {
@@ -678,11 +702,30 @@ void revetor()
                dup2(fileno(stderr), 2);
                setlinebuf(stdout);
 
-               // gROOT->LoadMacro("evd.h");
-               std::string dataPath = req["file"].get<std::string>();
-               printf( "dataPath = %s \n", dataPath.c_str());
-               auto *prov = new VsdProvider(dataPath.c_str());
-               evd_run(prov);
+               std::string error;
+               FWProvider *prov = nullptr;
+               try
+               {
+                  prov = CreateProvider(req, error);
+               }
+               catch (std::exception &exc)
+               {
+                  error = exc.what();
+               }
+               if (!prov)
+               {
+                  printf("%s: failed to create the data provider: %s\n", m_name.c_str(), error.c_str());
+                  // the reply quotes strings with '
+                  std::replace(error.begin(), error.end(), '\'', '"');
+                  char pmsg[1024];
+                  snprintf(pmsg, 1024, "{ 'error'=>'%s', 'log_fname'=>'%s' }\n", error.c_str(), log_fname);
+                  SendRawString(s, pmsg);
+                  s->Close();
+                  delete s;
+                  exit(1);
+               }
+
+               evd_run(prov, EvdBaseDir());
 
                auto gui = REX::gEve->GetWorld()->LastChild();
                std::string lp = logdirurl + log_fname;
@@ -695,7 +738,7 @@ void revetor()
                std::string con_key = RandomString(rnd, 16);
                REX::gEve->GetWebWindow()->SetConnToken(con_key);
 
-REX::gEve->Show();
+               REX::gEve->Show();
                auto url = REX::gEve->GetWebWindow()->GetUrl();
                printf("URL %s \n", url.c_str());
                std::regex re("(\\w+)://([^:]+):(\\d+)/*(.*)");
@@ -718,12 +761,14 @@ REX::gEve->Show();
                std::cout << "close TSocket\n";
                s->Close();
                delete s;
-               app.Run();
-               // Start status report timer
+
+               // Start status report timer, the parent uses the reports to find idle children
                StatReportTimer stat_report_timer;
                stat_report_timer.SetTime(30 * 1000);
                stat_report_timer.Start();
+
                // Run the standard event loop.
+               app.Run();
 
                // Exit.
                printf("Exiting cmsShowWeb.\n");
@@ -785,10 +830,12 @@ REX::gEve->Show();
    printf("Revetor exiting\n");
 }
 
+//------------------------------------------------------------------------------
+
 // parse options utilities
 typedef std::list<std::string> lStr_t;
 typedef lStr_t::iterator lStr_i;
-void next_arg_or_die(lStr_t &args, lStr_i &i, bool allow_single_minus = false)
+static void next_arg_or_die(lStr_t &args, lStr_i &i, bool allow_single_minus = false)
 {
    lStr_i j = i;
    if (++j == args.end() || ((*j)[0] == '-' && !(*j == "-" && allow_single_minus)))
@@ -799,33 +846,29 @@ void next_arg_or_die(lStr_t &args, lStr_i &i, bool allow_single_minus = false)
    i = j;
 }
 
-
-int main(int argc, char *argv[])
+int FWService::Main(int argc, char *argv[])
 {
   lStr_t mArgs;
   for (int i = 1; i < argc; ++i)
   {
     mArgs.push_back(argv[i]);
   }
-  bool run_shell = false;
 
   lStr_i i = mArgs.begin();
   while (i != mArgs.end())
   {
-    lStr_i start = i;
-
     if (*i == "-h" || *i == "-help" || *i == "--help")
-    {     printf(
-          "  --port     <int>   service port number\n"
-          "  --help "
-          "\n\n");
+    {
+         printf("%s\n"
+                "  --port     <int>   service port number, default %d\n"
+                "  --help "
+                "\n\n", m_name.c_str(), m_port);
          exit(0);
     }
     else if (*i == "--port")
     {
          next_arg_or_die(mArgs, i);
-         std::cout << "convert t ostring \n " << *i << "\n";
-         SERVICE_PORT = atoi(i->c_str());
+         m_port = atoi(i->c_str());
          i++;
     }
     else
@@ -834,7 +877,9 @@ int main(int argc, char *argv[])
          exit(1);
     }
   } // end command line
-  revetor();
+  Run();
 
   return 0;
 }
+
+#endif
