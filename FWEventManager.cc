@@ -148,7 +148,7 @@ void RotateLineAxis(float angle)
         }
     }
 
-    printf("Found scene: %s\n", scene->GetName());
+    printf("Found scene: %s\n", scene->GetCName());
 
     // Find LineSetAxis
     REveStraightLineSetProjected* axisp = nullptr;
