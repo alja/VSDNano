@@ -4,6 +4,7 @@
 #include "FWCollectionManager.h"
 
 #include <ROOT/REveManager.hxx>
+#include <ROOT/REveSelection.hxx>
 #include <ROOT/REveStraightLineSet.hxx>
 #include "TFile.h"
 
@@ -104,6 +105,12 @@ void EventManager::PreviousEvent()
 
 void EventManager::GotoEvent(int id)
 {
+    // Selection records point at collection item lists and item indices,
+    // which are reused for the new event: without this the outline stays on
+    // whatever item now has the selected index.
+    ROOT::Experimental::gEve->GetSelection()->ClearSelection();
+    ROOT::Experimental::gEve->GetHighlight()->ClearSelection();
+
     m_event->GotoEvent(id);
     UpdateTitle();
     m_collectionMng->RenewEvent();
