@@ -27,10 +27,11 @@ private:
    // remembers the RhoZ projection plane angle set for each event
    std::unordered_map<Long64_t, float> m_planeAngleByEvent;
 
-   // fish-eye distortion (Transform panel)
-   float m_rhoZDistortionStrength{0.8f};
+   // fish-eye distortion (Transform panel); the strengths must match the
+   // values applied in evd_main.cc (doFishEyeDistortion)
+   float m_rhoZDistortionStrength{0.f};
    float m_rhoZDistortionRadius{310.f};
-   float m_rPhiDistortionStrength{1.f};
+   float m_rPhiDistortionStrength{0.f};
    float m_rPhiDistortionRadius{310.f};
 
 

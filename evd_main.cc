@@ -80,7 +80,10 @@ public:
 };
 
 
-void doFishEyeDistortion(REveProjectionManager* projMgr, float s)
+// s scales the calo / muon pre-scale regions; fishEye is the fish-eye
+// distortion strength (the Transform panel slider, 0 = none). The fishEye
+// values passed below must match the defaults in FWEventManager.h.
+void doFishEyeDistortion(REveProjectionManager* projMgr, float s, float fishEye)
 {
     float caloDistortion = 0.05 * s;
     float muonDistortion = 0.025 * s;
@@ -100,7 +103,7 @@ void doFishEyeDistortion(REveProjectionManager* projMgr, float s)
 
     // static const float s_distortF = 0.001;
       REveProjection* p = projMgr->GetProjection();
-    p->SetDistortion(0.005 * s);
+    p->SetDistortion(0.005 * fishEye);
     p->SetFixR(310);
 
     // force an update
@@ -227,9 +230,10 @@ void createScenesAndViews(FWProvider *prov)
        mngRPhi->SetImportEmpty(true);
        auto rPhiView = gEve->SpawnNewViewer("RPhi View");
        rPhiView->SetCameraType(REveViewer::kCameraOrthoXOY);
-       // 16 matrix elements plus the ortho zoom, as logged by the client camera
+       // 16 matrix elements plus the ortho zoom, as logged by the client camera.
+       // Zoom 2.4 frames tracker + calorimeter without fish-eye distortion.
        rPhiView->GetCamera()->SetCamTransMtxStr(
-          "1,0,0,0,0,1,0,0,0,0,1,0,775.4515481255246,0,0,1,1.0650025206477394");
+          "1,0,0,0,0,1,0,0,0,0,1,0,775.4515481255246,0,0,1,2.4");
        rPhiView->AddScene(rPhiEventScene);
 
        auto pgeoScene = gEve->SpawnNewScene("Projection Geometry RPhi");
@@ -249,7 +253,7 @@ void createScenesAndViews(FWProvider *prov)
        mngRPhi->SetCurrentDepth(2);
        mngRPhi->ImportElements(calo3d, rPhiEventScene);
        mngRPhi->SetCurrentDepth(0);
-       doFishEyeDistortion(mngRPhi, 1);
+       doFishEyeDistortion(mngRPhi, 1, 0);
 
        axisRPhi = addProjectionAxis(mngRPhi, rPhiView, "RPhi");
    }
@@ -262,7 +266,7 @@ void createScenesAndViews(FWProvider *prov)
        // it is working but in the wrong direction
        std::vector<double> v = {1,0,0,0,0,1,0,0,0,0,1,0,1803.8861589595506,0,0,1,3.098029906503475};
        rhoZView->GetCamera()->SetCamTransMtx(v);
-       rhoZView->GetCamera()->SetOrthoZoom(1.40);
+       rhoZView->GetCamera()->SetOrthoZoom(1.9); // without fish-eye distortion
        rhoZView->AddScene(rhoZEventScene);
 
 
@@ -277,7 +281,7 @@ void createScenesAndViews(FWProvider *prov)
        mngRhoZ->SetCurrentDepth(-1);
        mngRhoZ->ImportElements(calo3d, rhoZEventScene);
        mngRhoZ->SetCurrentDepth(0);
-       doFishEyeDistortion(mngRhoZ, 0.8);
+       doFishEyeDistortion(mngRhoZ, 0.8, 0);
 
        // geo rhoz mng
        mngRhoZGeo = new REveProjectionManager(REveProjection::kPT_RhoZ);
@@ -291,7 +295,7 @@ void createScenesAndViews(FWProvider *prov)
        mngRhoZGeo->SetCurrentDepth(-4);
        mngRhoZGeo->ImportElements(b1, pgeoScene);
        mngRhoZGeo->ImportElements(getExtract("VSDGeo"), pgeoScene);
-       doFishEyeDistortion(mngRhoZGeo, 0.8);
+       doFishEyeDistortion(mngRhoZGeo, 0.8, 0);
 
        // Use the geometry manager: it has the same projection as mngRhoZ, but
        // its contents, and so the range of the ticks, do not change per event.
