@@ -1,6 +1,9 @@
 #ifndef VsdBase_h
 #define VsdBase_h
 
+// json.hpp uses std::basic_streambuf without including <streambuf>; the
+// macOS C++ module build of the dictionary does not see it otherwise.
+#include <streambuf>
 #include "nlohmann/json.hpp"
 #include "TStyle.h"
 #include "Rtypes.h"
@@ -220,17 +223,17 @@ public:
 ////////////////////////////////////////////////
 class VsdEventInfo : public VsdBase
 {
-   uint m_run{99};
-   uint m_lumi{99};
+   unsigned int m_run{99};
+   unsigned int m_lumi{99};
    Long64_t m_event{99};
 
 public:
    VsdEventInfo() = default;
    VsdEventInfo& operator=(const VsdEventInfo&) = default;
 
-  VsdEventInfo(uint r, uint l, long e) {m_run = r; m_lumi=l; m_event=e; }
-  uint run() {return m_run;}
-  uint lumi() {return m_lumi;}
+  VsdEventInfo(unsigned int r, unsigned int l, long e) {m_run = r; m_lumi=l; m_event=e; }
+  unsigned int run() {return m_run;}
+  unsigned int lumi() {return m_lumi;}
   Long64_t event() {return m_event;}
 
    using VsdBase::dump;

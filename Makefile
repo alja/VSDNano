@@ -12,6 +12,20 @@ CXX ?= c++
 # .d file next to it, read back in at the end of this file, so changing any
 # header rebuilds what uses it.
 DEPFLAGS := -MMD -MP
+
+# Platform linker options. macOS: libraries are found through @rpath, there is
+# no --no-as-needed, and shared libraries must resolve all their symbols.
+ifeq ($(shell uname -s),Darwin)
+  SONAME       = -Wl,-install_name,@rpath/$@
+  EXE_RPATH    = -Wl,-rpath,@loader_path -Wl,-rpath,$(shell root-config --libdir)
+  NO_AS_NEEDED =
+  EVE_LIBS     = -lEG -lGeom -lROOTWebDisplay -lROOTEve
+else
+  SONAME       =
+  EXE_RPATH    = -Wl,-rpath,'$$ORIGIN'
+  NO_AS_NEEDED = -Wl,--no-as-needed
+  EVE_LIBS     =
+endif
 #===============================================================================
 # Default
 #===============================================================================
@@ -36,7 +50,7 @@ VsdDict.o: VsdDict.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 libVsdDict.so: VsdDict.o
-	$(CXX) -shared -o $@ \
+	$(CXX) -shared $(SONAME) -o $@ \
 	    VsdDict.o \
 	    $(ROOT_LIBS)
 
@@ -69,10 +83,11 @@ VsdProxies.o: VsdProxies.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 libFWDict.so: FWDict.o FWEventManager.o VsdProxies.o
-	$(CXX) -shared -o $@ \
+	$(CXX) -shared $(SONAME) -o $@ \
 	    FWDict.o \
 	    FWEventManager.o \
 	    VsdProxies.o \
+	    $(EVE_LIBS) \
 	    $(ROOT_LIBS)
 
 
@@ -92,8 +107,8 @@ evd_run: evd_run.cc libVsdDict.so libFWDict.so
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPFLAGS) -o $@ \
 	    evd_run.cc \
 	    -L. \
-	    -Wl,-rpath,'$$ORIGIN' \
-	    -Wl,--no-as-needed \
+	    $(EXE_RPATH) \
+	    $(NO_AS_NEEDED) \
 	    -lVsdDict \
 	    -lFWDict \
 	    -lEG \
@@ -106,8 +121,8 @@ serviceVSDNano: service.cc libVsdDict.so libFWDict.so
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPFLAGS) -o $@ \
 	    service.cc \
 	    -L. \
-	    -Wl,-rpath,'$$ORIGIN' \
-	    -Wl,--no-as-needed \
+	    $(EXE_RPATH) \
+	    $(NO_AS_NEEDED) \
 	    -lVsdDict \
 	    -lFWDict \
 	    -lEG \
