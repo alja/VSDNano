@@ -154,6 +154,36 @@ public:
         }
         j["var"] = var;
 
+        // Table for the Summary view: the item list's tooltip expressions, which
+        // CollectionManager sets to the first three Table-view columns. They are
+        // compiled when the collection is set up, so nothing runs cling here.
+        auto &tips = GetItemList()->RefToolTipExpressions();
+        if (!tips.empty())
+        {
+            nlohmann::json cols = nlohmann::json::array();
+            for (auto &t : tips)
+                cols.push_back(t->fTooltipTitle);
+
+            nlohmann::json rows = nlohmann::json::array();
+            for (Int_t i = 0; i < GetNItems(); ++i)
+            {
+                nlohmann::json row = nlohmann::json::array();
+                for (auto &t : tips)
+                {
+                    try
+                    {
+                        row.push_back(t->fTooltipFunction.EvalExpr(GetDataPtr(i)));
+                    }
+                    catch (const std::exception &)
+                    {
+                        row.push_back("err");
+                    }
+                }
+                rows.push_back(row);
+            }
+            j["sumTable"] = {{"cols", cols}, {"rows", rows}};
+        }
+
         return res;
     }
 

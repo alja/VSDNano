@@ -59,6 +59,8 @@ public:
         }
         rdc->ApplyFilter();
         rdc->GetItemList()->StampObjProps();
+        // the collection itself streams the Summary-view table (FWDataCollection::WriteCoreJson)
+        rdc->StampObjProps();
 
         m_isEventLoading = false;
     }
@@ -179,6 +181,8 @@ public:
         {
             auto te = tableEntries[t];
             collection->GetItemList()->AddTooltipExpression(te.fName, te.fExpression);
+            // same number of decimals as in the Table view; only affects formatting
+            collection->GetItemList()->RefToolTipExpressions().back()->fTooltipFunction.SetPrecision(te.fPrecision);
         }
 
         collection->setGLBuilder(glBuilder);
