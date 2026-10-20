@@ -115,6 +115,17 @@ public:
     // Add a parameter with a default value, unless the VSD file already set it.
     void assertParameter(const std::string &name, bool val) { addParameter(name, FWParameter::kBool, val); }
     void assertParameter(const std::string &name, long val) { addParameter(name, FWParameter::kLong, val); }
+    // The GUI refuses values outside [min, max].
+    void assertParameter(const std::string &name, double val, double min, double max)
+    {
+        if (findParameter(name))
+            return;
+        addParameter(name, FWParameter::kDouble, val);
+        FWParameter *p = findParameter(name);
+        p->m_hasMin = p->m_hasMax = true;
+        p->m_min = min;
+        p->m_max = max;
+    }
 
     void setGLBuilder(ROOT::Experimental::REveDataProxyBuilderBase *ib)
     {
@@ -180,6 +191,15 @@ public:
         if (p && p->m_type == FWParameter::kLong)
             return long(p->m_val);
         printf("can't locate long paramter\n");
+        return 0;
+    }
+
+    double getDoubleParameter(const std::string &name)
+    {
+        FWParameter *p = findParameter(name);
+        if (p && p->m_type == FWParameter::kDouble)
+            return p->m_val;
+        printf("can't locate double paramter\n");
         return 0;
     }
 

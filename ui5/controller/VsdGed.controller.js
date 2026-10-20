@@ -99,6 +99,7 @@ sap.ui.define(['rootui5/eve7/controller/Ged.controller',
              iControl.setValueState(sap.ui.core.ValueState.Error);
          }
          else {
+             oEvent.getSource().setValueState(sap.ui.core.ValueState.None);
              let funcName = "UpdatePBParameter";
              let mir = funcName + "( \"" + oEvent.getSource().desc + "\",\"" + oEvent.getParameter("value") + "\" )";
              gcm.mgr.SendMIR(mir, gcm.editorElement.fElementId, gcm.editorElement._typename);
