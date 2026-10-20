@@ -174,6 +174,8 @@ void RotateLineAxis(float angle)
         axis->RefMainTrans().UnitTrans();
         axis->RefMainTrans().RotatePF(2, 1, TMath::DegToRad() * angle);
         axis->StampObjProps();
+        // the axis only marks a rotated projection plane
+        axisp->SetRnrSelf(angle != 0.f);
         axisp->StampObjProps();
     }
     else
