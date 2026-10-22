@@ -38,6 +38,13 @@ const kSumTableCss = `
 /* the table needs no tree indentation; the tree sets it as an inline padding */
 .vsdSumTableItem.sapMTreeItemBase { padding-left: 0.4rem !important; }
 .vsdSumTableItem .sapMTreeItemBaseExpander { display: none; }
+/* The edit button of a summary row is shorter than the icon's line height,
+   which puts the pencil on its bottom edge. Center the icon instead. */
+.eveSummaryItem .sapMBtn .sapMBtnInner { display: flex; align-items: center; justify-content: center; }
+.eveSummaryItem .sapMBtn .sapMBtnIcon { line-height: 1; }
+/* a little room between a row's checkbox and its name; the FlexBox wraps
+   each of them in a sapMFlexItem */
+.eveSummaryItem .sapMFlexItem:has(> .sapMCb) + .sapMFlexItem { margin-left: 0.25rem; }
 `;
 
 function escapeHtml(s) {
