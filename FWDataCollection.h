@@ -4,6 +4,8 @@
 #include "ROOT/REveDataCollection.hxx"
 #include "ROOT/REveDataProxyBuilderBase.hxx"
 #include "nlohmann/json.hpp"
+#include "TColor.h"
+#include "TROOT.h"
 
 #include <cerrno>
 #include <cstdio>
@@ -18,7 +20,8 @@
 // nlohmann::json, which has no dictionary, that sends cling into a deep, slow lookup.
 struct FWParameter
 {
-   enum EType { kBool, kLong, kDouble };
+   // kColor holds a ROOT color index, edited with a color picker
+   enum EType { kBool, kLong, kDouble, kColor };
 
    std::string m_name;
    EType m_type{kLong};
@@ -44,8 +47,42 @@ private:
         case FWParameter::kBool:   return "Bool";
         case FWParameter::kLong:   return "Long";
         case FWParameter::kDouble: return "Double";
+        case FWParameter::kColor:  return "Color";
         }
         return "Long";
+    }
+
+    // Nearest ROOT color that the web client knows. The client looks up colors
+    // by index in JSROOT's copy of ROOT's predefined colors, so an index that
+    // TColor::GetColor() creates for a new RGB value (1000 and up) shows as
+    // white. These are the basic colors, the color wheel and the grays.
+    static Color_t nearestWebColor(int r, int g, int b)
+    {
+        static const int wheel[] = {kRed, kPink, kMagenta, kViolet, kBlue, kAzure,
+                                    kCyan, kTeal, kGreen, kSpring, kYellow, kOrange};
+        std::vector<int> cands = {kWhite, kBlack, kGray, kGray + 1, kGray + 2, kGray + 3};
+        for (int w : wheel)
+            for (int o = -10; o <= 10; ++o)
+                cands.push_back(w + o);
+
+        Color_t best = kBlack;
+        long best_d = -1;
+        for (int ci : cands)
+        {
+            TColor *c = gROOT->GetColor(ci);
+            if (!c)
+                continue;
+            long dr = r - long(255 * c->GetRed() + 0.5);
+            long dg = g - long(255 * c->GetGreen() + 0.5);
+            long db = b - long(255 * c->GetBlue() + 0.5);
+            long d = dr * dr + dg * dg + db * db;
+            if (best_d < 0 || d < best_d)
+            {
+                best_d = d;
+                best = ci;
+            }
+        }
+        return best;
     }
 
     FWParameter *findParameter(const std::string &name)
@@ -86,6 +123,8 @@ public:
                 p.m_type = FWParameter::kLong;
             else if (type == "Double")
                 p.m_type = FWParameter::kDouble;
+            else if (type == "Color")
+                p.m_type = FWParameter::kColor;
             else
             {
                 printf("FWDataCollection %s: skipping parameter %s of unknown type %s\n", n.c_str(), p.m_name.c_str(), type.c_str());
@@ -115,6 +154,7 @@ public:
     // Add a parameter with a default value, unless the VSD file already set it.
     void assertParameter(const std::string &name, bool val) { addParameter(name, FWParameter::kBool, val); }
     void assertParameter(const std::string &name, long val) { addParameter(name, FWParameter::kLong, val); }
+    void assertColorParameter(const std::string &name, Color_t val) { addParameter(name, FWParameter::kColor, val); }
     // The GUI refuses values outside [min, max].
     void assertParameter(const std::string &name, double val, double min, double max)
     {
@@ -144,6 +184,13 @@ public:
                 par["val"] = p.m_val != 0;
             else if (p.m_type == FWParameter::kLong)
                 par["val"] = long(p.m_val);
+            else if (p.m_type == FWParameter::kColor)
+            {
+                // the GUI shows the color, it does not know ROOT's color table
+                par["val"] = long(p.m_val);
+                TColor *c = gROOT->GetColor(Int_t(p.m_val));
+                par["rgb"] = c ? c->AsHexString() : "#808080";
+            }
             else
                 par["val"] = p.m_val;
             if (p.m_hasMin)
@@ -197,11 +244,22 @@ public:
             {
                 p->m_val = (strcmp(val, "true") == 0);
             }
+            else if (p->m_type == FWParameter::kColor && strchr(val, ','))
+            {
+                // "r,g,b" from the color picker, 0-255 each
+                int r, g, b;
+                if (sscanf(val, "%d,%d,%d", &r, &g, &b) != 3)
+                {
+                    printf("Conversion error for parameter %s value %s\n", name, val);
+                    return;
+                }
+                p->m_val = nearestWebColor(r, g, b);
+            }
             else
             {
                 char *eptr;
                 errno = 0;
-                double x = (p->m_type == FWParameter::kLong) ? double(strtol(val, &eptr, 10)) : strtod(val, &eptr);
+                double x = (p->m_type == FWParameter::kDouble) ? strtod(val, &eptr) : double(strtol(val, &eptr, 10));
                 if (eptr == val || errno != 0)
                 {
                     printf("Conversion error for parameter %s value %s\n", name, val);
@@ -215,10 +273,11 @@ public:
             m_builder->Build();
     }
 
+    // also returns the index of a Color parameter
     long getLongParameter(const std::string &name)
     {
         FWParameter *p = findParameter(name);
-        if (p && p->m_type == FWParameter::kLong)
+        if (p && (p->m_type == FWParameter::kLong || p->m_type == FWParameter::kColor))
             return long(p->m_val);
         printf("can't locate long paramter\n");
         return 0;
