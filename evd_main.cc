@@ -237,7 +237,8 @@ void createScenesAndViews(FWProvider *prov)
        rPhiView->AddScene(rPhiEventScene);
 
        auto pgeoScene = gEve->SpawnNewScene("Projection Geometry RPhi");
-       mngRPhi->SetCurrentDepth(-4);
+       // far behind the event: projected jets are drawn at z = -30, tracks and muons at 0
+       mngRPhi->SetCurrentDepth(-300);
        mngRPhi->ImportElements(b1, pgeoScene);
 
        REveStraightLineSet* ls = new REveStraightLineSet("LineSetAxis");
@@ -292,8 +293,10 @@ void createScenesAndViews(FWProvider *prov)
        mngRhoZGeo->SetImportEmpty(true);
        auto pgeoScene = gEve->SpawnNewScene("Projection Geometry RhoZ");
        rhoZView->AddScene(pgeoScene);
-       mngRhoZGeo->SetCurrentDepth(-4);
-       mngRhoZGeo->ImportElements(b1, pgeoScene);
+       // far behind the event, as in RPhi: projected jets and their towers are drawn at z = -30
+       mngRhoZGeo->SetCurrentDepth(-300);
+       // the barrel stays in the scene, but is not drawn in RhoZ (it can be switched on in the GUI)
+       mngRhoZGeo->ImportElements(b1, pgeoScene)->SetRnrSelf(false);
        mngRhoZGeo->ImportElements(getExtract("VSDGeo"), pgeoScene);
        doFishEyeDistortion(mngRhoZGeo, 0.8, 0);
 
