@@ -34,7 +34,8 @@
 
       initEVE(source_dir).then(() => connectWebWindow({
          ui5: true,
-         openui5libs: "sap.ui.core" // customize openui5 libs
+         openui5libs: "sap.ui.core", // customize openui5 libs
+         openui5theme: "sap_fiori_3_dark" // dark mode is the default, see evd_run()
       })).then(handle => {
          console.log("EVE JSR  source", EVE.JSR.source_dir);
 

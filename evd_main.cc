@@ -324,7 +324,7 @@ void evd_run(FWProvider *prov, const std::string &baseDir = ".")
 
    ROOT::RWebWindowsManager::SetLoopbackMode(false);
    ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false);
-   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("12.0");
+   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("14.0");
 
    std::string locPath = g_evdBaseDir + "/ui5";
    gEve->AddLocation("unidir/", locPath);
@@ -363,6 +363,10 @@ void evd_run(FWProvider *prov, const std::string &baseDir = ".")
    }
 
    eventMng->GotoEvent(0);
+
+   // dark mode by default; the Settings popup switches it. eventDisplay.html
+   // starts the GUI in the dark theme to match.
+   eventMng->setDarkMode(true);
 
    
 

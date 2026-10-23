@@ -199,10 +199,15 @@ let pthis = this;
             return;
 
          if (this.lightThemeName === undefined) {
-            // the theme the page started with, and its dark variant
-            this.lightThemeName = sap.ui.getCore().getConfiguration().getTheme();
-            this.darkThemeName = this.lightThemeName === "sap_fiori_3" ? "sap_fiori_3_dark" : "sap_horizon_dark";
+            // light and dark variant of the theme the page started with
+            // (eventDisplay.html starts in sap_fiori_3_dark)
+            let theme = sap.ui.getCore().getConfiguration().getTheme();
+            this.lightThemeName = theme.replace(/_dark$/, "");
+            this.darkThemeName = this.lightThemeName + "_dark";
+            this.themeIsDark = theme.endsWith("_dark");
             this.setupDarkTableCells();
+            if (this.themeIsDark === dark)
+               return;
          }
          this.themeIsDark = dark;
          sap.ui.getCore().applyTheme(dark ? this.darkThemeName : this.lightThemeName);
@@ -223,15 +228,20 @@ let pthis = this;
             return "<span class='" + (filtered ? "vsdTableCellPassDark" : "vsdTableCellFailDark") + "'>" + value + "</span>";
          };
 
-         sap.ui.getCore().attachThemeChanged(function() {
-            pthis.mgr.FindViewers().forEach(function(viewer) {
-               if (viewer.ca && viewer.ca._controllerName == "rootui5.eve7.controller.EveTable") {
-                  let ctrl = viewer.ca.getController();
-                  ctrl.refreshTable = true;
-                  ctrl.bindTableColumns = true;
-                  ctrl.endChanges();
-               }
-            });
+         sap.ui.getCore().attachThemeChanged(this.refreshTables.bind(this));
+         // tables built before getCellText was replaced, e.g. when the page starts dark
+         this.refreshTables();
+      },
+
+      /** Rebuild the Table views, so that their cells use the current getCellText. */
+      refreshTables: function() {
+         this.mgr.FindViewers().forEach(function(viewer) {
+            if (viewer.ca && viewer.ca._controllerName == "rootui5.eve7.controller.EveTable") {
+               let ctrl = viewer.ca.getController();
+               ctrl.refreshTable = true;
+               ctrl.bindTableColumns = true;
+               ctrl.endChanges();
+            }
          });
       },
 
