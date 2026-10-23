@@ -63,7 +63,7 @@ libVsdDict.so: VsdDict.o
 # from the VsdDict module instead of being compiled into this one.
 # rootcling does not write dependency files: list every local header the
 # dictionary headers include, directly or not.
-FWDict.cc: FWEventManager.h FWDataCollection.h VsdProxies.h VsdBase.h lego_bins.h \
+FWDict.cc: FWEventManager.h FWDataCollection.h FWColorPalette.h VsdProxies.h VsdBase.h lego_bins.h \
            FW_Linkdef.h module.modulemap VsdDict.cc
 	@rm -f FWDict.cc FWDict.pcm libFWDict_rdict.pcm
 	rootcling -I. -f FWDict.cc -s libFWDict.so \

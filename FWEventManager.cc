@@ -7,6 +7,9 @@
 #include <ROOT/REveSelection.hxx>
 #include <ROOT/REveStraightLineSet.hxx>
 #include <ROOT/REveViewer.hxx>
+#include "FWColorPalette.h"
+
+#include <map>
 #include "TFile.h"
 
 using namespace ROOT::Experimental;
@@ -256,6 +259,41 @@ void EventManager::setRPhiDistortionRadius(float r)
     StampObjProps();
 }
 
+// Dark-mode palette, in the spirit of Fireworks' colors for black backgrounds:
+// geometry gets much darker, collections a little.
+static const float kGeomDarkFactor = 0.4f;
+static const float kCollectionDarkFactor = 0.8f;
+
+// Light-mode colors of the elements recolored in dark mode. Kept here, not in
+// EventManager: an STL member would make ROOT look its type up with cling when
+// the TClass of EventManager is created.
+static std::map<REveElement *, Color_t> s_lightColors;
+
+// Dark mode: the recorded light color scaled by f; light mode: the light color.
+static void SetPaletteColor(REveElement *el, bool dark, float f)
+{
+    auto it = s_lightColors.find(el);
+    if (dark)
+    {
+        if (it == s_lightColors.end())
+            it = s_lightColors.emplace(el, el->GetMainColor()).first;
+        el->SetMainColor(scaledColor(it->second, f));
+    }
+    else if (it != s_lightColors.end())
+    {
+        el->SetMainColor(it->second);
+    }
+}
+
+static void RecolorGeometry(REveElement *el, bool dark)
+{
+    // line sets, such as the RPhi rotation axis, keep their own colors
+    if (el->GetMainColorPtr() && !dynamic_cast<REveStraightLineSet *>(el))
+        SetPaletteColor(el, dark, kGeomDarkFactor);
+    for (auto *c : el->RefChildren())
+        RecolorGeometry(c, dark);
+}
+
 void EventManager::setDarkMode(bool x)
 {
     if (x == m_darkMode) return;
@@ -274,6 +312,19 @@ void EventManager::setDarkMode(bool x)
         axisp->SetMainColor(x ? kWhite : kBlack);
         axisp->StampObjProps();
     }
+
+    // palette: darker geometry and collections in dark mode
+    for (auto *scene : gEve->GetScenes()->RefChildren())
+    {
+        TString name = scene->GetName();
+        if (scene == gEve->GetGlobalScene() || name.BeginsWith("Projection Geometry"))
+            for (auto *el : scene->RefChildren())
+                RecolorGeometry(el, x);
+    }
+    if (auto collections = gEve->GetScenes()->FindChild("Collections"))
+        for (auto *coll : collections->RefChildren())
+            SetPaletteColor(coll, x, kCollectionDarkFactor);
+
     StampObjProps();
 }
 
