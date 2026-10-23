@@ -3,9 +3,17 @@ sap.ui.define(['rootui5/eve7/controller/Main.controller',
                "sap/ui/core/mvc/XMLView",
                'sap/ui/core/Fragment',
                'sap/m/MenuItem',
-               'rootui5/eve7/lib/GlViewerRCore'
-], function(MainController, EveManager, XMLView, Fragment, MenuItem, GlViewerRCore) {
+               'rootui5/eve7/lib/GlViewerRCore',
+               'rootui5/eve7/controller/EveTable.controller'
+], function(MainController, EveManager, XMLView, Fragment, MenuItem, GlViewerRCore, EveTableController) {
    "use strict";
+
+   // Cell text colours of the Table view in a dark theme; ROOT's eve.css sets
+   // black and light gray, for a light background.
+   const kDarkTableCss = `
+.vsdTableCellPassDark { color: #e8e8e8; }
+.vsdTableCellFailDark { color: #7d7d7d; }
+`;
 
    return MainController.extend("custom.MyNewMain", {
 
@@ -174,6 +182,57 @@ let pthis = this;
          this.byId("projections").setValue(this.fw2gui.planeAngle);
 
          this.byId("gotoEventInput").setValue(event);
+
+         this.applyDarkMode(!!this.fw2gui.darkMode);
+      },
+
+      /** Dark mode is kept on the server (EventManager::setDarkMode), which also
+        * gives the GL viewers a black background; here the GUI follows with a
+        * dark UI5 theme, as FireworksWeb does. */
+      onDarkModeChange: function(oEvent) {
+         this.mgr.SendMIR("setDarkMode(" + oEvent.getParameter("state") + ")", this.fw2gui.fElementId, "EventManager");
+      },
+
+      applyDarkMode: function(dark) {
+         this.byId("darkModeSwitch").setState(dark);
+         if (this.themeIsDark === dark)
+            return;
+
+         if (this.lightThemeName === undefined) {
+            // the theme the page started with, and its dark variant
+            this.lightThemeName = sap.ui.getCore().getConfiguration().getTheme();
+            this.darkThemeName = this.lightThemeName === "sap_fiori_3" ? "sap_fiori_3_dark" : "sap_horizon_dark";
+            this.setupDarkTableCells();
+         }
+         this.themeIsDark = dark;
+         sap.ui.getCore().applyTheme(dark ? this.darkThemeName : this.lightThemeName);
+      },
+
+      /** The Table view writes its cells with fixed light-theme colours: use other
+        * classes in the dark theme, and redraw the tables when the theme changes. */
+      setupDarkTableCells: function() {
+         let style = document.createElement("style");
+         style.textContent = kDarkTableCss;
+         document.head.appendChild(style);
+
+         let pthis = this;
+         let origGetCellText = EveTableController.prototype.getCellText;
+         EveTableController.prototype.getCellText = function(value, filtered) {
+            if (!pthis.themeIsDark)
+               return origGetCellText.apply(this, arguments);
+            return "<span class='" + (filtered ? "vsdTableCellPassDark" : "vsdTableCellFailDark") + "'>" + value + "</span>";
+         };
+
+         sap.ui.getCore().attachThemeChanged(function() {
+            pthis.mgr.FindViewers().forEach(function(viewer) {
+               if (viewer.ca && viewer.ca._controllerName == "rootui5.eve7.controller.EveTable") {
+                  let ctrl = viewer.ca.getController();
+                  ctrl.refreshTable = true;
+                  ctrl.bindTableColumns = true;
+                  ctrl.endChanges();
+               }
+            });
+         });
       },
 
       nextEvent : function(oEvent) {

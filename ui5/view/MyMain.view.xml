@@ -28,6 +28,10 @@
                     change="onProjectionSubmit"/>
              <Button icon="sap-icon://add" press="onProjectionStepUp" tooltip="Increase by 1"/>
            </HBox>
+           <HBox alignItems="Center" class="sapUiTinyMarginTop">
+             <Label text="Dark mode:" labelFor="darkModeSwitch" width="13em"/>
+             <Switch id="darkModeSwitch" state="false" change="onDarkModeChange"/>
+           </HBox>
          </VBox>
        </Popover>
      </dependents>

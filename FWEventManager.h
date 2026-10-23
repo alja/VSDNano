@@ -23,6 +23,7 @@ private:
    std::mutex m_mutex;
    std::condition_variable m_CV;
    bool m_autoplay{false};
+   bool m_darkMode{false};
    float m_planeAngle{0.f};
    // remembers the RhoZ projection plane angle set for each event
    std::unordered_map<Long64_t, float> m_planeAngleByEvent;
@@ -61,6 +62,9 @@ public:
    void setRhoZDistortionRadius(float r);
    void setRPhiDistortionStrength(float s);
    void setRPhiDistortionRadius(float r);
+
+   // dark mode: black background in the GL viewers; the GUI follows with a dark theme
+   void setDarkMode(bool x);
 };
 
 #endif

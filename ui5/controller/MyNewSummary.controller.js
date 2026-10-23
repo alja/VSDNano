@@ -26,12 +26,12 @@ let SumTableItem = CustomTreeItem.extend("custom.SumTableItem", {
 const kSumTableCss = `
 .vsdSumTable { font-size: 0.7rem; margin: 0.1rem 0 0.3rem 0; max-width: 100%; overflow-x: auto; }
 .vsdSumTable table { border-collapse: collapse; }
-.vsdSumTable th { font-weight: normal; background: #e5e5e5; padding: 0 0.3rem; text-align: center; }
-.vsdSumTable td { border: 1px solid #c8c8c8; padding: 0 0.3rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vsdSumTable th { font-weight: normal; background: var(--sapList_HeaderBackground, #e5e5e5); color: var(--sapList_HeaderTextColor, inherit); padding: 0 0.3rem; text-align: center; }
+.vsdSumTable td { border: 1px solid var(--sapList_BorderColor, #c8c8c8); color: var(--sapTextColor, inherit); padding: 0 0.3rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .vsdSumTable td.vsdRowHead { text-align: left; padding-left: 0.15rem; }
 .vsdSumTable input { margin: 0 0.2rem 0 0; vertical-align: middle; width: 0.8rem; height: 0.8rem; }
 .vsdSumTable .vsdSwatch { display: inline-block; width: 0.6rem; height: 0.6rem; margin-right: 0.25rem; vertical-align: middle; border: 1px solid #888; }
-.vsdSumTable tr.vsdFiltered td { color: #9a9a9a; }
+.vsdSumTable tr.vsdFiltered td { opacity: 0.5; }
 .vsdSumTable tbody tr { cursor: pointer; }
 .vsdSumTable tr.vsdSelected td { background: rgb(66, 124, 172); color: #fff; }
 .vsdSumTableItem .sapMLIBContent { min-width: 0; }

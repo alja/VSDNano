@@ -6,6 +6,7 @@
 #include <ROOT/REveManager.hxx>
 #include <ROOT/REveSelection.hxx>
 #include <ROOT/REveStraightLineSet.hxx>
+#include <ROOT/REveViewer.hxx>
 #include "TFile.h"
 
 using namespace ROOT::Experimental;
@@ -141,7 +142,8 @@ void EventManager::NextEvent()
     GotoEvent(id);
 }
 
-void RotateLineAxis(float angle)
+// The projected rotation axis in the RPhi geometry scene, or nullptr.
+static REveStraightLineSetProjected *FindRPhiLineAxis()
 {
     REveScene *scene = nullptr;
 
@@ -154,19 +156,21 @@ void RotateLineAxis(float angle)
             break;
         }
     }
-
-    printf("Found scene: %s\n", scene->GetCName());
+    if (!scene)
+        return nullptr;
 
     // Find LineSetAxis
-    REveStraightLineSetProjected* axisp = nullptr;
     for (auto *el : scene->RefChildren())
     {
         if (el->GetName() == "LineSetAxis [P]")
-        {
-            axisp = static_cast<REveStraightLineSetProjected *>(el);
-            break;
-        }
+            return static_cast<REveStraightLineSetProjected *>(el);
     }
+    return nullptr;
+}
+
+void RotateLineAxis(float angle)
+{
+    REveStraightLineSetProjected* axisp = FindRPhiLineAxis();
 
     if (axisp)
     {
@@ -252,6 +256,27 @@ void EventManager::setRPhiDistortionRadius(float r)
     StampObjProps();
 }
 
+void EventManager::setDarkMode(bool x)
+{
+    if (x == m_darkMode) return;
+
+    m_darkMode = x;
+    // The GL viewers swap background and foreground; elements that follow the
+    // foreground colour, such as the projection axes, are recoloured by the client.
+    for (auto *el : gEve->GetViewers()->RefChildren())
+    {
+        if (auto viewer = dynamic_cast<REveViewer *>(el))
+            viewer->SetBlackBackground(x);
+    }
+    // the RPhi rotation axis has a fixed colour
+    if (auto axisp = FindRPhiLineAxis())
+    {
+        axisp->SetMainColor(x ? kWhite : kBlack);
+        axisp->StampObjProps();
+    }
+    StampObjProps();
+}
+
 int EventManager::WriteCoreJson(nlohmann::json &j, int rnr_offset)
 {
     int res = REveElement::WriteCoreJson(j, -1);
@@ -260,6 +285,7 @@ int EventManager::WriteCoreJson(nlohmann::json &j, int rnr_offset)
     j["rhoZDistortionRadius"] = m_rhoZDistortionRadius;
     j["rPhiDistortionStrength"] = m_rPhiDistortionStrength;
     j["rPhiDistortionRadius"] = m_rPhiDistortionRadius;
+    j["darkMode"] = m_darkMode;
     return res;
 }
 void EventManager::FilterPublished(const char *data) {}
