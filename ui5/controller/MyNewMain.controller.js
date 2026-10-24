@@ -65,8 +65,57 @@ let pthis = this;
 
          if (world[last]._typename == "EventManager") {
             this.fw2gui = (world[last]);
+            this.hookFileName();
             this.showEventInfo();
          }
+      },
+
+      // Refit the file name whenever it, the event counter next to it, or the
+      // window changes size.
+      hookFileName: function() {
+         if (this.fileNameHooked) return;
+         this.fileNameHooked = true;
+         let refit = () => this.fitFileName();
+         this.byId("fileName").addEventDelegate({ onAfterRendering: refit });
+         this.byId("fileNav").addEventDelegate({ onAfterRendering: refit });
+         window.addEventListener("resize", refit);
+      },
+
+      // Show the data file name in the room between GoToEvent and the event
+      // counter. A path too long for it is trimmed at the start ("…/dir/file.root"),
+      // so that it does not run under GoToEvent; the tooltip has the full name.
+      fitFileName: function() {
+         let full = this.fullFileName;
+         let label = this.byId("fileName");
+         if (!full || !label) return;
+         label.setTooltip(full);
+
+         let ld = label.getDomRef(), nd = this.byId("fileNav").getDomRef(), bar = this.byId("otb2").getDomRef();
+         let mid = bar && bar.querySelector(".sapMBarPH");
+         if (!ld || !nd || !mid) {
+            if (label.getText() !== full) label.setText(full);
+            return;
+         }
+         // Measure from where GoToEvent sits when centered: the Bar pushes its
+         // middle content aside when the right side is too wide, and measuring
+         // from its current place would let the name keep it there.
+         let br = bar.getBoundingClientRect();
+         let midRight = br.left + br.width / 2 + mid.getBoundingClientRect().width / 2;
+         let navLeft = nd.getBoundingClientRect().left;
+         let labelGap = Math.max(0, navLeft - ld.getBoundingClientRect().right); // margin before the counter
+         let room = navLeft - labelGap - midRight - 24;                           // 24px clear of GoToEvent
+
+         let ctx = this.measureCtx || (this.measureCtx = document.createElement("canvas").getContext("2d"));
+         ctx.font = getComputedStyle(ld).font;
+         let fits = t => ctx.measureText(t).width <= room;
+
+         let text = full;
+         if (!fits(text)) {
+            let i = 1;
+            while (i < full.length - 1 && !fits("\u2026" + full.substring(i))) ++i;
+            text = "\u2026" + full.substring(i);
+         }
+         if (label.getText() !== text) label.setText(text);
       },
 
       updateViewers: function(loading_done) {
@@ -172,8 +221,9 @@ let pthis = this;
          this.byId("lumiInput").setValue(lumi);
          this.byId("eventInput").setValue(eiei);
 
-         this.byId("fileName").setText(this.fw2gui.fName);
+         this.fullFileName = this.fw2gui.fName;
          this.byId("fileName").setDesign("Bold");
+         this.fitFileName();
 
 
          this.byId("fileNav").setText(event + "/" + nevents);
