@@ -12,7 +12,7 @@
   - [Write TTree with branches with vector of VSD objects](#write-ttree-with-branches-with-vector-of-vsd-objects)
   - [Run event display through web service](#run-event-display-through-web-service)
 - [Developers information](#developers-information)
-  - [1. Build ROOT master](#1-build-root-master)
+  - [1. Build ROOT](#1-build-root)
   - [2. Build VSDNano with that ROOT](#2-build-vsdnano-with-that-root)
   - [3. Generate a sample VSD file with Python](#3-generate-a-sample-vsd-file-with-python)
   - [4. Run evd_run](#4-run-evd_run)
@@ -121,9 +121,9 @@ https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
 # Developers information
 
-To change the VSD structures or their graphic representation, you need ROOT master from [root-project/root](https://github.com/root-project/root), from 2 October 2026 (commit `a58fd7d4206`) or later, built with REve. Older ROOT lacks `REveProjectionAxis`, which the RPhi and RhoZ views use. The steps below build ROOT, build VSDNano against it, make a sample VSD file with `UserVsd.py`, and view it with `evd_run`. They were run on vocms0102 as user `viz` in September 2026, on EL9 with the system gcc 11.5, cmake 3.31, git and cvmfs. Change the paths to match your own area.
+To change the VSD structures or their graphic representation, you need ROOT built with REve from the `cms-fixes` branch of [alja/root](https://github.com/alja/root): recent ROOT `master` plus EVE 7 fixes that are not in [root-project/root](https://github.com/root-project/root) yet. Without them, for example, a display of a file without calorimeter towers aborts in a Debug build. ROOT `master` from before 2 October 2026 (commit `a58fd7d4206`) also lacks `REveProjectionAxis`, which the RPhi and RhoZ views use. The steps below build ROOT, build VSDNano against it, make a sample VSD file with `UserVsd.py`, and view it with `evd_run`. They were run on vocms0102 as user `viz` in September 2026, on EL9 with the system gcc 11.5, cmake 3.31, git and cvmfs. Change the paths to match your own area.
 
-## 1. Build ROOT master
+## 1. Build ROOT
 
 ROOT is built with plain cmake and Makefiles and used straight from its build directory; no install is needed.
 
@@ -132,7 +132,7 @@ ROOT is built with plain cmake and Makefiles and used straight from its build di
 ```bash
 export TOP=/home/viz/universal-format/root-dev/master2   # any empty directory
 mkdir -p $TOP && cd $TOP
-git clone -b master https://github.com/root-project/root.git root
+git clone -b cms-fixes https://github.com/alja/root.git root
 mkdir build
 ```
 
@@ -156,8 +156,8 @@ cmake ../root \
 | Option | Why |
 | --- | --- |
 | `http`, `webgui`, `root7`, `builtin_civetweb`, `builtin_openui5` | Build the web server and the web-based Eve (REve) that VSDNano uses. |
-| `builtin_ftgl`, `builtin_vdt`, `builtin_cfitsio` | ROOT master stops at configure if these are not installed on the system, instead of quietly building its own copies. |
-| `Python3_EXECUTABLE` | ROOT master needs Python 3.11 or newer; the EL9 system `python3` is 3.9. The LCG_106 interpreter on cvmfs is 3.11.9. |
+| `builtin_ftgl`, `builtin_vdt`, `builtin_cfitsio` | Current ROOT stops at configure if these are not installed on the system, instead of quietly building its own copies. |
+| `Python3_EXECUTABLE` | Current ROOT needs Python 3.11 or newer; the EL9 system `python3` is 3.9. The LCG_106 interpreter on cvmfs is 3.11.9. |
 
 Without `Python3_EXECUTABLE`, configure turns PyROOT off and the build later fails while generating `man/root.1` with `_Python3_EXECUTABLE-NOTFOUND: command not found`.
 
