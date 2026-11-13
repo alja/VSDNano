@@ -17,6 +17,7 @@
 #include <ROOT/REveTrack.hxx>
 #include <ROOT/REveTrackPropagator.hxx>
 #include <ROOT/REveViewer.hxx>
+#include <ROOT/REveWindowManager.hxx>
 #include <ROOT/REveViewContext.hxx>
 #include <ROOT/REveDataCollection.hxx>
 #include <ROOT/REveSelection.hxx>
@@ -327,7 +328,7 @@ void evd_run(FWProvider *prov, const std::string &baseDir = ".")
 
    ROOT::RWebWindowsManager::SetLoopbackMode(false);
    ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false);
-   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("14.0");
+   ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("15.0");
 
    std::string locPath = g_evdBaseDir + "/ui5";
    gEve->AddLocation("unidir/", locPath);
@@ -382,6 +383,23 @@ void evd_run(FWProvider *prov, const std::string &baseDir = ".")
       "-0.03857454319570427,0.05181460365323833,0.9979114447011297,0,"
       "275.447406312539,-413.7404815474096,35.79954893399402,1,"
       "1");
+
+   // Window layout at startup, 2x2: the 3D and RPhi views on top, the RhoZ view
+   // and the table at the bottom. Views can be rearranged by dragging them by
+   // their toolbars.
+   auto findViewer = [](const char *name) { return dynamic_cast<REveViewer *>(gEve->GetViewers()->FindChild(name)); };
+   auto mainPack = gEve->GetWindowManager()->GetMainPack();
+   mainPack->SetVertical();
+   auto top = mainPack->NewHorizontalPack();
+   top->AddViewer(defaultViewer);
+   if (auto v = findViewer("RPhi View"))
+      top->AddViewer(v);
+   auto bottom = mainPack->NewHorizontalPack();
+   for (const char *name : {"RhoZ View", "Table"})
+   {
+      if (auto v = findViewer(name))
+         bottom->AddViewer(v);
+   }
 
    gEnv->SetValue("WebEve.DisableShow", 1);
    gEve->Show();

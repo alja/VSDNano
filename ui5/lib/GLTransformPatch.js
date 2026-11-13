@@ -123,7 +123,10 @@ sap.ui.define([
          }
       });
 
-      ctrl.getView().byId("tbar").insertContent(infoBtn, 1);
+      // Insert after ROOT's own buttons, so that destroy stays the last one.
+      let tbar = ctrl.getView().byId("tbar");
+      let destroyIdx = tbar.getContent().findIndex(c => c.getTooltip?.() === "destroy");
+      tbar.insertContent(infoBtn, destroyIdx >= 0 ? destroyIdx : tbar.getContent().length);
    };
 
    return {};

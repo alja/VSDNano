@@ -118,57 +118,6 @@ let pthis = this;
          if (label.getText() !== text) label.setText(text);
       },
 
-      updateViewers: function(loading_done) {
-         let viewers = this.mgr.FindViewers();
-
-         // first check number of views to create
-         let staged = [];
-         for (let n=0;n<viewers.length;++n) {
-            let el = viewers[n];
-            // at startup show only mandatory views
-            if (typeof el.subscribed == 'undefined')
-               el.subscribed = el.Mandatory;
-
-            if (!el.$view_created && el.fRnrSelf) staged.push(el);
-         }
-         if (staged.length == 0) return;
-
-         // swap 3d and rhoz view
-         const temp = [staged[2], staged[0]];
-         staged[0] = temp[0];
-         staged[2] = temp[1];
-
-
-         let vMenu = this.getView().byId("menuViewId");
-
-         for (let n=0;n<staged.length;++n) {
-            let eveView = staged[n];
-
-            // add menu item
-            let vi = new MenuItem({ text: staged[n].fName, press: this.subscribeView.bind(this, staged[n]) });
-            vi.setEnabled(!eveView.subscribed);
-            vi.eveView = eveView;
-            vMenu.addItem(vi);
-
-            eveView.$view_created = true;
-            if(eveView.subscribed) this.makeEveViewController(eveView);
-         }
-
-         if (staged.length === 1) {
-            let eveView = staged[0];
-            this.getSwapButton(eveView.ca).setEnabled(false);
-         }
-      },
-
-      // the base class picks the swap button by fixed index (getContent()[2]), which breaks once GLTransformPatch adds its button in front of it; look it up by its tooltip instead
-      getSwapButton: function (va) {
-         return va.byId("tbar").getContent().find(c => c.getTooltip?.() === "swap");
-      },
-
-      setToolbarSwapIcon: function (va, iName) {
-         this.getSwapButton(va)?.setIcon("sap-icon://" + iName);
-      },
-
       showFWLog: function () {
             let idx = this.fw2gui.childs.length -1;
             sap.m.URLHelper.redirect(this.fw2gui.childs[idx].fTitle, true);
