@@ -40,15 +40,20 @@
          console.log("EVE JSR  source", EVE.JSR.source_dir);
 
          sap.ui.loader.config({ paths: { custom: "unidir/" } });
-         
+
+         // ?Single=<viewer name> shows only that viewer, as ROOT's eve7/index.html
+         // does: a viewer undocked to its own window is opened this way.
+         const single = new URLSearchParams(window.location.search).get("Single");
+
          sap.ui.require(["sap/ui/core/ComponentContainer"], ComponentContainer => {
             new ComponentContainer({
-               name: "custom",
-               manifest: true,
+               name: single ? "rootui5.eve7" : "custom",
+               manifest: single ? "rootui5sys/eve7/manifest-mini.json" : true,
                async: true,
                settings: {
                   componentData: {
-                     conn_handle: handle
+                     conn_handle: handle,
+                     sgv_undock: single
                   }
                },
                height: "100%"
