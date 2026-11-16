@@ -84,7 +84,7 @@ Use existing randomly generated  samples in the universal data format service ht
 The VSD libraries are not yet distributed in ROOT. Currently one needs to build them with the sources in this repository. 
 Setup a ROOT environment and use [Makefile](/Makefile) to build libraries
 ```
-git clone https://github.com/alja/VSDNano.git
+git clone --branch window-manager https://github.com/alja/VSDNano.git
 make libVsdDict.co libFWDict.co
 ```
 
@@ -121,7 +121,7 @@ https://fireworks.cern.ch/cmsShowWeb/revetor-uni.cgi
 
 # Developers information
 
-To change the VSD structures or their graphic representation, you need ROOT built with REve from the `cms-fixes` branch of [alja/root](https://github.com/alja/root): recent ROOT `master` plus EVE 7 fixes that are not in [root-project/root](https://github.com/root-project/root) yet. Without them, for example, a display of a file without calorimeter towers aborts in a Debug build, and the energy towers of jets are drawn half transparent in the RPhi and RhoZ views whatever their transparency is set to. ROOT `master` from before 2 October 2026 (commit `a58fd7d4206`) also lacks `REveProjectionAxis`, which the RPhi and RhoZ views use. The steps below build ROOT, build VSDNano against it, make a sample VSD file with `UserVsd.py`, and view it with `evd_run`. They were run on vocms0102 as user `viz` in September 2026, on EL9 with the system gcc 11.5, cmake 3.31, git and cvmfs. Change the paths to match your own area.
+To change the VSD structures or their graphic representation, you need ROOT built with REve from the `window-manager` branch of [alja/root](https://github.com/alja/root): recent ROOT `master` plus EVE 7 changes that are not in [root-project/root](https://github.com/root-project/root) yet. This branch of VSDNano lays out its views with the window manager (`REveWindowManager`) from it and does not build without it. It also has fixes: without them, for example, a display of a file without calorimeter towers aborts in a Debug build. ROOT `master` from before 2 October 2026 (commit `a58fd7d4206`) also lacks `REveProjectionAxis`, which the RPhi and RhoZ views use. The steps below build ROOT, build VSDNano against it, make a sample VSD file with `UserVsd.py`, and view it with `evd_run`. They were run on vocms0102 as user `viz` in September 2026, on EL9 with the system gcc 11.5, cmake 3.31, git and cvmfs. Change the paths to match your own area.
 
 ## 1. Build ROOT
 
@@ -132,7 +132,7 @@ ROOT is built with plain cmake and Makefiles and used straight from its build di
 ```bash
 export TOP=/home/viz/universal-format/root-dev/master2   # any empty directory
 mkdir -p $TOP && cd $TOP
-git clone -b cms-fixes https://github.com/alja/root.git root
+git clone -b window-manager https://github.com/alja/root.git root
 mkdir build
 ```
 
@@ -194,7 +194,7 @@ The [Makefile](/Makefile) takes every compile and link flag from `root-config`, 
 
 ```bash
 cd /home/viz/universal-format
-git clone git@github.com:alja/VSDNano.git sept-VSDNano
+git clone -b window-manager git@github.com:alja/VSDNano.git sept-VSDNano
 cd sept-VSDNano
 ```
 
@@ -289,3 +289,4 @@ source /home/viz/universal-format/root-dev/master2/build/bin/thisroot.sh
 - **The port** comes from the `WebGui.HttpPortMin`/`HttpPortMax` range in `.rootrc`. The log prints it, for example `Starting HTTP server on port 10091s`; the trailing `s` means HTTPS.
 - **To view it,** open `https://<host>:<port>/win1/`. vocms0102 is behind lxplus, so you may need a tunnel first: `ssh -L 10091:localhost:10091 vocms0102`, then open `https://localhost:10091/win1/`.
 - **To keep it running after logout:** `setsid nohup ./evd_run <file> > evd_run.log 2>&1 < /dev/null &`. Stop it with `pkill -x evd_run`.
+- **To rearrange the views,** drag a view by its toolbar (the strip with its name and the grip of dots): drop it on the middle of another view to swap the two, near an edge of another view to place it beside it, or outside the browser window to open it in a window of its own (the URL ends in `?Single=<view name>`). The display starts with 3D and RPhi on top, RhoZ and the table below.
