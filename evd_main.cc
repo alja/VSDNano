@@ -324,10 +324,10 @@ void evd_run(FWProvider *prov, const std::string &baseDir = ".")
    g_evdBaseDir = baseDir;
 
    auto eveMng = REveManager::Create();
+   // no loopback mode, so that clients on other hosts can connect, and no
+   // authentication key
    gEve->AllowMultipleRemoteConnections(false, false);
 
-   ROOT::RWebWindowsManager::SetLoopbackMode(false);
-   ROOT::Experimental::gEve->GetWebWindow()->SetRequireAuthKey(false);
    ROOT::Experimental::gEve->GetWebWindow()->SetClientVersion("15.0");
 
    std::string locPath = g_evdBaseDir + "/ui5";
