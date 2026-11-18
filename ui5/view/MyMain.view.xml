@@ -12,7 +12,7 @@
          showSubHeader="true" class="sapUiSizeCompact" id="CanvasMainPage">
      <dependents>
        <!-- Opened by the Settings button. Declared here, not loaded lazily, because
-            the controller reads lineScaleInput and projections before the popover is shown. -->
+            the controller reads lineScaleInput, markerScaleInput and projections before the popover is shown. -->
        <Popover id="settingsPopover" title="Settings" placement="Bottom"
                 class="sapUiResponsivePadding--header">
          <VBox class="sapUiSmallMargin">
@@ -20,6 +20,11 @@
              <Label text="Line width:" labelFor="lineScaleInput" width="13em"/>
              <Input id="lineScaleInput" width="5em" type="Number" textAlign="Center" value="2"
                     tooltip="RQ_LineScale" change="onLineScaleChange"/>
+           </HBox>
+           <HBox alignItems="Center" class="sapUiTinyMarginTop">
+             <Label text="Marker size:" labelFor="markerScaleInput" width="13em"/>
+             <Input id="markerScaleInput" width="5em" type="Number" textAlign="Center" value="1"
+                    tooltip="RQ_MarkerScale" change="onMarkerScaleChange"/>
            </HBox>
            <HBox alignItems="Center" class="sapUiTinyMarginTop">
              <Label text="RhoZ projection plane angle:" labelFor="projections" width="13em"/>

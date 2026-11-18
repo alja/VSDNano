@@ -39,16 +39,21 @@ let pthis = this;
           
          elem.setHtmlText(title);
 
-         // GL viewers take RQ_LineScale from the URL (default 1) and apply it in bootstrap();
-         // without a URL value, use the input's current value instead (also for views opened later);
-         // an explicit URL value wins and is shown in the input
-         let url_scale = new URLSearchParams(window.location.search).get("RQ_LineScale");
-         if (url_scale) {
-            this.byId("lineScaleInput").setValue(url_scale);
-         } else {
+         // GL viewers take RQ_LineScale and RQ_MarkerScale from the URL (default 1) and apply
+         // them in bootstrap(); without a URL value, use the input's current value instead (also
+         // for views opened later); an explicit URL value wins and is shown in the input
+         let urlParams = new URLSearchParams(window.location.search);
+         let url_line = urlParams.get("RQ_LineScale");
+         let url_marker = urlParams.get("RQ_MarkerScale");
+         if (url_line) this.byId("lineScaleInput").setValue(url_line);
+         if (url_marker) this.byId("markerScaleInput").setValue(url_marker);
+         if (!url_line || !url_marker) {
             let orig_bootstrap = GlViewerRCore.prototype.bootstrap;
             GlViewerRCore.prototype.bootstrap = function () {
-               this.RQ_LineScale = parseFloat(pthis.byId("lineScaleInput").getValue()) || 1;
+               if (!url_line)
+                  this.RQ_LineScale = parseFloat(pthis.byId("lineScaleInput").getValue()) || 1;
+               if (!url_marker)
+                  this.RQ_MarkerScale = parseFloat(pthis.byId("markerScaleInput").getValue()) || 1;
                return orig_bootstrap.apply(this, arguments);
             };
          }
@@ -331,23 +336,37 @@ let pthis = this;
          this.mgr.SendMIR("playdelay(" + pd_milisec + ")", this.fw2gui.fElementId, "EventManager");
       },
 
-      setLineScale: function (scale) {
+      // Set a GL viewer factor, "RQ_LineScale" or "RQ_MarkerScale", in all GL views.
+      setPointLineScale: function (name, scale) {
          for (let ctrl of this.mgr.gl_controllers) {
             let v = ctrl.viewer;
             if (!v?.creator || v.RQ_Mode == "Direct") continue;   // Direct mode never sets the factors
-            v.RQ_LineScale = scale;
+            v[name] = scale;
             v.creator.SetupPointLineFacs(v.RQ_SSAA,
                                          v.RQ_MarkerScale * v.canvas.pixelRatio,
                                          v.RQ_LineScale   * v.canvas.pixelRatio);
          }
-         // rebuild the current event so its tracks pick up the new width
+         // rebuild the current event so its tracks and markers pick up the new size
          this.mgr.SendMIR("GotoEvent(" + this.byId("gotoEventInput").getValue() + ")",
                           this.fw2gui.fElementId, "EventManager");
+      },
+
+      setLineScale: function (scale) {
+         this.setPointLineScale("RQ_LineScale", scale);
       },
 
       onLineScaleChange: function (oEvent) {
          let s = parseFloat(oEvent.getParameter("value"));
          if (s > 0) this.setLineScale(s);
+      },
+
+      setMarkerScale: function (scale) {
+         this.setPointLineScale("RQ_MarkerScale", scale);
+      },
+
+      onMarkerScaleChange: function (oEvent) {
+         let s = parseFloat(oEvent.getParameter("value"));
+         if (s > 0) this.setMarkerScale(s);
       },
 
       /*   onProjectionSubmit: function (oEvent) {
