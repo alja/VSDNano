@@ -55,6 +55,10 @@ public:
 
    // columns of the table view, per item class
    virtual void SetupTables(ROOT::Experimental::REveTableViewInfo *) {}
+
+   // collection the table view shows at startup, if there is one with that
+   // name; empty for the first collection
+   virtual std::string GetTableCollection() { return ""; }
 };
 
 #endif

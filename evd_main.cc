@@ -366,6 +366,16 @@ void evd_run(FWProvider *prov, const std::string &baseDir = ".")
       collectionMng->addCollection(spec);
    }
 
+   // The table view shows the first collection, see CollectionManager::addCollection,
+   // unless the provider names another one that is there.
+   std::string tableColl = prov->GetTableCollection();
+   if (!tableColl.empty())
+   {
+      auto collections = gEve->GetScenes()->FindChild("Collections");
+      if (auto coll = collections ? collections->FindChild(tableColl.c_str()) : nullptr)
+         viewContext->GetTableViewInfo()->SetDisplayedCollection(coll->GetElementId());
+   }
+
    eventMng->GotoEvent(0);
 
    // dark mode by default; the Settings popup switches it. eventDisplay.html
