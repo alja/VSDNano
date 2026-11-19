@@ -132,6 +132,10 @@ REveProjectionAxis *addProjectionAxis(REveProjectionManager *mng, REveViewer *vi
    auto axis = new REveProjectionAxis(mng, Form("%s Axis", name));
    axis->SetFont(kAxisFont);
    axis->SetFontSize(0.022);
+   // a fixed grey, legible on both the dark and the light background
+   axis->SetUseFgColor(false);
+   axis->SetTextColor(kGray + 2);
+   axis->SetLineColor(kGray + 2);
    ovl->AddElement(axis);
 
    view->AddScene(ovl);
@@ -386,6 +390,7 @@ void evd_run(FWProvider *prov, const std::string &baseDir = ".")
 
    auto defaultViewer = dynamic_cast<REveViewer *>(gEve->GetViewers()->FirstChild());
    defaultViewer->SetName("3D View");
+   defaultViewer->SetAxesColor(kGray + 2);
    // 16 matrix elements plus the ortho zoom, as logged by the client camera
    defaultViewer->GetCamera()->SetCamTransMtxStr(
       "0.5959113929618195,-0.8004479141104681,0.06459681520399758,0,"
